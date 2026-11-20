@@ -1,0 +1,280 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard — MoodMate{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- Top Welcome Banner -->
+    <header class="dashboard-hero">
+        <div class="hero-text-content">
+            <div class="hero-date-pill">
+                <i class="fa-regular fa-calendar-heart"></i> {{ today_formatted }}
+            </div>
+            <h1 class="welcome-heading">
+                {{ greeting_time }}, <span class="user-highlight">{{ user.name }}</span> <span class="wave-emoji">{{ user.avatar or '🌸' }}</span>
+            </h1>
+            <p class="welcome-subtext">How is your heart feeling in this moment? Take a peaceful pause with yourself.</p>
+        </div>
+
+        <div class="daily-quote-card">
+            <div class="quote-header">
+                <span class="quote-tag"><i class="fa-solid fa-leaf"></i> Daily Reflection</span>
+                <span class="quote-pill">{{ daily_quote.tag }}</span>
+            </div>
+            <blockquote class="quote-body">
+                "{{ daily_quote.quote }}"
+            </blockquote>
+            <cite class="quote-author">— {{ daily_quote.author }}</cite>
+        </div>
+    </header>
+
+    <!-- Quick Mood Check-In Widget -->
+    <section class="quick-checkin-section card-shadow">
+        <div class="checkin-header">
+            <div class="checkin-title-wrap">
+                <span class="section-icon">💭</span>
+                <div>
+                    <h2>Quick Mood Check-In</h2>
+                    <p>Select how you feel right now. We'll save it to your wellness timeline.</p>
+                </div>
+            </div>
+            {% if latest_mood %}
+            <div class="last-logged-badge" title="Your last logged mood">
+                <span>Last logged: </span>
+                <strong>{{ latest_mood.mood_type.capitalize() }} ({{ latest_mood.intensity }}/10)</strong>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="mood-selector-grid" id="quickMoodGrid">
+            <button type="button" class="mood-choice-btn" data-mood="happy">
+                <span class="mood-emoji">😊</span>
+                <span class="mood-name">Happy</span>
+            </button>
+            <button type="button" class="mood-choice-btn" data-mood="calm">
+                <span class="mood-emoji">🌿</span>
+                <span class="mood-name">Calm</span>
+            </button>
+            <button type="button" class="mood-choice-btn" data-mood="okay">
+                <span class="mood-emoji">🙂</span>
+                <span class="mood-name">Okay</span>
+            </button>
+            <button type="button" class="mood-choice-btn" data-mood="anxious">
+                <span class="mood-emoji">😰</span>
+                <span class="mood-name">Anxious</span>
+            </button>
+            <button type="button" class="mood-choice-btn" data-mood="sad">
+                <span class="mood-emoji">😢</span>
+                <span class="mood-name">Sad</span>
+            </button>
+            <button type="button" class="mood-choice-btn" data-mood="exhausted">
+                <span class="mood-emoji">🥱</span>
+                <span class="mood-name">Exhausted</span>
+            </button>
+            <button type="button" class="mood-choice-btn" data-mood="lonely">
+                <span class="mood-emoji">🥺</span>
+                <span class="mood-name">Lonely</span>
+            </button>
+            <button type="button" class="mood-choice-btn" data-mood="confused">
+                <span class="mood-emoji">😕</span>
+                <span class="mood-name">Confused</span>
+            </button>
+            <button type="button" class="mood-choice-btn" data-mood="angry">
+                <span class="mood-emoji">😤</span>
+                <span class="mood-name">Angry</span>
+            </button>
+        </div>
+
+        <!-- Collapsible quick note & intensity for fast logging -->
+        <div class="quick-checkin-expand" id="quickCheckinExpand" style="display: none;">
+            <div class="checkin-details-row">
+                <div class="intensity-group">
+                    <label class="form-label">
+                        Intensity Level: <strong id="quickIntensityVal">5</strong>/10
+                    </label>
+                    <input type="range" min="1" max="10" value="5" class="slider-input" id="quickIntensitySlider">
+                </div>
+                <div class="note-group">
+                    <label class="form-label">Add a quick reflection note (optional)</label>
+                    <input type="text" class="form-input" id="quickNoteInput" placeholder="e.g. Finished my college assignment, feeling relieved...">
+                </div>
+            </div>
+            <div class="checkin-actions">
+                <button type="button" class="btn btn-primary" id="saveQuickMoodBtn">
+                    <i class="fa-solid fa-check"></i> Log Mood
+                </button>
+                <button type="button" class="btn btn-outline" id="cancelQuickMoodBtn">Cancel</button>
+                <a href="{{ url_for('mood_page') }}" class="subtle-link checkin-full-link">Open Full Mood Analytics &rarr;</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Navigation Shortcuts Grid -->
+    <section class="shortcuts-grid">
+        <!-- Shortcut 1: Talk to MoodMate AI -->
+        <a href="{{ url_for('chat_page') }}" class="shortcut-card card-ai-companion card-hover">
+            <div class="shortcut-icon-wrap bg-soft-purple">
+                <i class="fa-solid fa-comment-dots"></i>
+            </div>
+            <div class="shortcut-content">
+                <div class="shortcut-title-row">
+                    <h3>Talk to MoodMate</h3>
+                    <span class="status-indicator-pill"><span class="pulse-dot"></span> Ready to listen</span>
+                </div>
+                <p>Express whatever is on your mind. Friendly, empathetic AI companion with voice support.</p>
+                <div class="shortcut-cta">
+                    <span>Start conversation</span>
+                    <i class="fa-solid fa-arrow-right"></i>
+                </div>
+            </div>
+        </a>
+
+        <!-- Shortcut 2: Personal Journal -->
+        <a href="{{ url_for('journal_page') }}" class="shortcut-card card-journal card-hover">
+            <div class="shortcut-icon-wrap bg-soft-green">
+                <i class="fa-solid fa-book-open"></i>
+            </div>
+            <div class="shortcut-content">
+                <div class="shortcut-title-row">
+                    <h3>Personal Journal</h3>
+                    <span class="counter-badge">{{ total_journals }} entries</span>
+                </div>
+                <p>Pour out your thoughts in a calm, distraction-free private space with writing prompts.</p>
+                <div class="shortcut-cta">
+                    <span>Open writing space</span>
+                    <i class="fa-solid fa-arrow-right"></i>
+                </div>
+            </div>
+        </a>
+
+        <!-- Shortcut 3: Calm Corner -->
+        <a href="{{ url_for('calm_page') }}" class="shortcut-card card-calm card-hover">
+            <div class="shortcut-icon-wrap bg-soft-peach">
+                <i class="fa-solid fa-spa"></i>
+            </div>
+            <div class="shortcut-content">
+                <div class="shortcut-title-row">
+                    <h3>Calm Corner</h3>
+                    <span class="sound-wave-icon">🌊 🌧️ 🍃</span>
+                </div>
+                <p>Guided box breathing, soothing ambient soundscapes, and 5-4-3-2-1 grounding exercises.</p>
+                <div class="shortcut-cta">
+                    <span>Breathe & relax</span>
+                    <i class="fa-solid fa-arrow-right"></i>
+                </div>
+            </div>
+        </a>
+
+        <!-- Shortcut 4: Tiny Wins -->
+        <a href="{{ url_for('wins_page') }}" class="shortcut-card card-wins card-hover">
+            <div class="shortcut-icon-wrap bg-soft-yellow">
+                <i class="fa-solid fa-trophy"></i>
+            </div>
+            <div class="shortcut-content">
+                <div class="shortcut-title-row">
+                    <h3>Tiny Wins</h3>
+                    <span class="counter-badge">{{ total_wins }} wins</span>
+                </div>
+                <p>Celebrate small daily victories with confetti. Every single step forward counts!</p>
+                <div class="shortcut-cta">
+                    <span>Celebrate milestone</span>
+                    <i class="fa-solid fa-arrow-right"></i>
+                </div>
+            </div>
+        </a>
+    </section>
+
+    <!-- Recent Activity & Insights Overview -->
+    <div class="dashboard-activity-split">
+        <!-- Recent Moods Activity -->
+        <div class="activity-card card-shadow">
+            <div class="activity-card-header">
+                <h3><i class="fa-solid fa-chart-line"></i> Recent Mood History</h3>
+                <a href="{{ url_for('mood_page') }}" class="view-all-link">View Charts &rarr;</a>
+            </div>
+            <div class="recent-moods-list">
+                {% if recent_moods %}
+                    {% for m in recent_moods %}
+                    <div class="recent-mood-row">
+                        <span class="mood-badge-avatar">
+                            {% if m.mood_type == 'happy' %}😊
+                            {% elif m.mood_type == 'calm' %}🌿
+                            {% elif m.mood_type == 'okay' %}🙂
+                            {% elif m.mood_type == 'sad' %}😢
+                            {% elif m.mood_type == 'anxious' %}😰
+                            {% elif m.mood_type == 'angry' %}😤
+                            {% elif m.mood_type == 'exhausted' %}🥱
+                            {% elif m.mood_type == 'lonely' %}🥺
+                            {% else %}💭{% endif %}
+                        </span>
+                        <div class="mood-row-info">
+                            <strong>{{ m.mood_type.capitalize() }}</strong>
+                            <small class="text-muted">{{ m.created_at.strftime('%a, %b %d • %I:%M %p') }}</small>
+                            {% if m.note %}
+                            <p class="mood-row-note">"{{ m.note }}"</p>
+                            {% endif %}
+                        </div>
+                        <div class="intensity-pill intensity-{{ m.intensity }}">
+                            {{ m.intensity }}/10
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state-mini">
+                        <span>🌱</span>
+                        <p>No moods recorded yet. Tap an emoji above to log your first check-in!</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Latest Journal & Tiny Wins Preview -->
+        <div class="activity-card card-shadow">
+            <div class="activity-card-header">
+                <h3><i class="fa-solid fa-feather-pointed"></i> Recent Reflections</h3>
+                <a href="{{ url_for('journal_page') }}" class="view-all-link">Write &rarr;</a>
+            </div>
+
+            {% if latest_journal %}
+            <div class="journal-preview-card">
+                <span class="journal-preview-tag">{{ latest_journal.mood_tag or 'Journal Entry' }}</span>
+                <h4 class="journal-preview-title">{{ latest_journal.title }}</h4>
+                <p class="journal-preview-text">{{ latest_journal.content[:160] }}{% if latest_journal.content|length > 160 %}...{% endif %}</p>
+                <span class="journal-preview-date"><i class="fa-regular fa-clock"></i> {{ latest_journal.created_at.strftime('%b %d, %Y') }}</span>
+            </div>
+            {% else %}
+            <div class="empty-state-mini">
+                <span>📖</span>
+                <p>Your journal is ready for your thoughts. Write whenever you feel like sharing.</p>
+                <a href="{{ url_for('journal_page') }}" class="btn btn-sm btn-outline">Write First Entry</a>
+            </div>
+            {% endif %}
+
+            <div class="divider-subtle"></div>
+
+            <div class="tiny-wins-preview-section">
+                <div class="preview-subheading">
+                    <span><i class="fa-solid fa-award"></i> Latest Tiny Wins</span>
+                    <a href="{{ url_for('wins_page') }}" class="view-all-link">+ Add Win</a>
+                </div>
+                {% if recent_wins %}
+                <ul class="wins-mini-list">
+                    {% for w in recent_wins %}
+                    <li class="win-mini-item">
+                        <span class="win-check">✨</span>
+                        <span class="win-title">{{ w.title }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="empty-text-hint">No wins added yet today. Even drinking water or getting out of bed is a win worth celebrating! 🌟</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

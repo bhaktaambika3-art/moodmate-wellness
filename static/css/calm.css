@@ -1,0 +1,387 @@
+/* ===================================================================
+   MoodMate — Calm Corner Stylesheet (calm.css)
+   =================================================================== */
+
+.calm-page-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
+}
+
+/* Nav Tabs */
+.calm-nav-tabs {
+    display: flex;
+    gap: 0.5rem;
+    overflow-x: auto;
+    padding-bottom: 4px;
+}
+
+.calm-tab-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.65rem 1.15rem;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-pill);
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    transition: var(--transition-smooth);
+    white-space: nowrap;
+}
+
+.calm-tab-btn:hover {
+    color: var(--lavender-primary);
+    border-color: var(--lavender-primary);
+}
+
+.calm-tab-btn.active {
+    background-color: var(--lavender-primary);
+    color: #FFFFFF;
+    border-color: var(--lavender-primary);
+    box-shadow: 0 4px 12px rgba(139, 114, 222, 0.25);
+}
+
+.calm-tab-pane {
+    display: none;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.calm-tab-pane.active {
+    display: block;
+}
+
+/* TAB 1: GUIDED BREATHING */
+.breathing-card {
+    padding: 3rem 2rem;
+    background: var(--bg-surface);
+    border-radius: var(--radius-xl);
+    text-align: center;
+    max-width: 680px;
+    margin: 0 auto;
+}
+
+.breathing-controls-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.pattern-selector {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.pattern-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.form-select-sm {
+    padding: 0.45rem 0.85rem;
+    font-size: 0.85rem;
+    border-radius: var(--radius-md);
+    width: auto;
+}
+
+.cycle-counter-badge {
+    background: var(--lavender-light);
+    color: var(--lavender-primary);
+    padding: 0.4rem 0.85rem;
+    border-radius: var(--radius-pill);
+    font-size: 0.85rem;
+}
+
+/* Breathing Visualizer Ring */
+.breathing-visualizer-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 280px;
+    margin-bottom: 2rem;
+}
+
+.breathing-circle-outer {
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--lavender-light) 0%, rgba(139, 114, 222, 0.05) 70%);
+    border: 3px solid rgba(139, 114, 222, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 4s ease, border-color 0.5s ease;
+    box-shadow: 0 0 25px rgba(139, 114, 222, 0.1);
+}
+
+.breathing-circle-outer.inhale {
+    transform: scale(1.35);
+    border-color: var(--lavender-primary);
+    box-shadow: 0 0 45px rgba(139, 114, 222, 0.35);
+}
+
+.breathing-circle-outer.hold {
+    transform: scale(1.35);
+    border-color: var(--peach-primary);
+    box-shadow: 0 0 45px rgba(244, 162, 97, 0.35);
+}
+
+.breathing-circle-outer.exhale {
+    transform: scale(1);
+    border-color: var(--sage-primary);
+    box-shadow: 0 0 20px rgba(82, 183, 136, 0.2);
+}
+
+.breathing-circle-inner {
+    width: 130px;
+    height: 130px;
+    border-radius: 50%;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-subtle);
+}
+
+.breathing-phase-text {
+    font-family: var(--font-heading);
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--lavender-primary);
+}
+
+.breathing-timer-number {
+    font-size: 2.2rem;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--text-primary);
+}
+
+.breathing-instruction {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    margin-bottom: 2rem;
+    min-height: 24px;
+}
+
+.breathing-buttons-row {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+/* TAB 2: AMBIENT SOUNDSCAPES */
+.soundscapes-card {
+    padding: 2.5rem;
+    background: var(--bg-surface);
+    border-radius: var(--radius-xl);
+}
+
+.soundscape-intro {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.soundscape-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+}
+
+.sounds-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.5rem;
+}
+
+.sound-channel-card {
+    background: var(--bg-surface-subtle);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    transition: var(--transition-smooth);
+}
+
+.sound-channel-card.playing {
+    border-color: var(--lavender-primary);
+    box-shadow: 0 4px 18px rgba(139, 114, 222, 0.15);
+    background: var(--bg-surface);
+}
+
+.sound-channel-top {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+}
+
+.sound-emoji {
+    font-size: 2rem;
+}
+
+.sound-meta {
+    flex: 1;
+}
+
+.sound-meta h4 {
+    font-size: 1rem;
+}
+
+.sound-meta small {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+}
+
+.sound-toggle-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    transition: var(--transition-smooth);
+}
+
+.sound-channel-card.playing .sound-toggle-btn {
+    background: var(--lavender-primary);
+    color: #FFFFFF;
+    border-color: var(--lavender-primary);
+}
+
+.sound-volume-slider-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+
+.sound-volume {
+    flex: 1;
+}
+
+/* TAB 3: 5-4-3-2-1 GROUNDING */
+.grounding-card {
+    padding: 2.5rem;
+    background: var(--bg-surface);
+    border-radius: var(--radius-xl);
+    max-width: 680px;
+    margin: 0 auto;
+}
+
+.grounding-header {
+    margin-bottom: 2rem;
+}
+
+.grounding-step-badge {
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    background: var(--peach-light);
+    color: var(--peach-primary);
+    padding: 3px 10px;
+    border-radius: var(--radius-pill);
+    margin-bottom: 0.5rem;
+}
+
+.grounding-header h3 {
+    font-size: 1.5rem;
+    margin-bottom: 0.4rem;
+}
+
+.grounding-header p {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+}
+
+.grounding-check-items {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+}
+
+.grounding-checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 0.85rem 1rem;
+    border-radius: var(--radius-md);
+    background: var(--bg-surface-subtle);
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: var(--transition-smooth);
+}
+
+.grounding-checkbox-row:hover {
+    border-color: var(--peach-primary);
+}
+
+.grounding-item-chk {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--peach-primary);
+}
+
+.grounding-actions-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+/* TAB 4: AFFIRMATIONS */
+.affirmations-card {
+    padding: 4rem 2rem;
+    background: linear-gradient(135deg, var(--lavender-light), var(--peach-light));
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-xl);
+    text-align: center;
+    max-width: 680px;
+    margin: 0 auto;
+}
+
+.affirmation-badge-pill {
+    display: inline-block;
+    font-size: 0.78rem;
+    font-weight: 600;
+    background: var(--bg-surface);
+    color: var(--lavender-primary);
+    padding: 4px 12px;
+    border-radius: var(--radius-pill);
+    margin-bottom: 1.5rem;
+}
+
+.affirmation-display {
+    font-family: var(--font-heading);
+    font-size: 1.75rem;
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--text-primary);
+    margin-bottom: 1.25rem;
+    min-height: 80px;
+}
+
+.affirmation-author {
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    margin-bottom: 2.5rem;
+}

@@ -1,0 +1,246 @@
+/* ===================================================================
+   MoodMate — Tiny Wins Stylesheet (wins.css)
+   =================================================================== */
+
+.wins-page-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+/* Celebration Hero Banner */
+.wins-stats-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding: 1.75rem 2rem;
+    background: linear-gradient(135deg, var(--yellow-light), var(--peach-light));
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-xl);
+    flex-wrap: wrap;
+    gap: 1.5rem;
+}
+
+.banner-stat-item {
+    text-align: center;
+}
+
+.stat-number {
+    display: block;
+    font-family: var(--font-heading);
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.1;
+}
+
+.stat-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.banner-divider {
+    width: 1px;
+    height: 40px;
+    background: var(--border-color);
+}
+
+.motivation-item {
+    max-width: 320px;
+    text-align: left;
+}
+
+.stat-quote-text {
+    display: block;
+    font-style: italic;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+}
+
+.stat-quote-sub {
+    font-size: 0.78rem;
+    color: var(--lavender-primary);
+    font-weight: 600;
+}
+
+/* Add Win Card */
+.add-win-card {
+    padding: 1.75rem 2rem;
+    background: var(--bg-surface);
+    border-radius: var(--radius-xl);
+    animation: fadeIn 0.25s ease-out;
+}
+
+.card-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.25rem;
+}
+
+.close-card-btn {
+    font-size: 1.4rem;
+    color: var(--text-muted);
+}
+
+.category-chips-select {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: 0.35rem;
+}
+
+.category-chip {
+    padding: 0.45rem 0.85rem;
+    background: var(--bg-surface-subtle);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-pill);
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    transition: var(--transition-smooth);
+}
+
+.category-chip:hover {
+    border-color: var(--yellow-primary);
+}
+
+.category-chip.active {
+    background: var(--yellow-light);
+    color: var(--text-primary);
+    border-color: var(--yellow-primary);
+    font-weight: 600;
+}
+
+.form-actions-win {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    margin-top: 1.25rem;
+}
+
+/* Category Filter Bar */
+.wins-filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.filter-label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.filter-pills-wrap {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+}
+
+.filter-pill {
+    padding: 0.35rem 0.85rem;
+    border-radius: var(--radius-pill);
+    font-size: 0.8rem;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    transition: var(--transition-smooth);
+}
+
+.filter-pill:hover {
+    border-color: var(--lavender-primary);
+    color: var(--lavender-primary);
+}
+
+.filter-pill.active {
+    background: var(--lavender-primary);
+    color: #FFFFFF;
+    border-color: var(--lavender-primary);
+}
+
+/* Wins Grid */
+.wins-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.25rem;
+}
+
+.win-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-xl);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 1rem;
+    box-shadow: var(--shadow-card);
+    transition: var(--transition-smooth);
+    position: relative;
+    overflow: hidden;
+}
+
+.win-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-float);
+    border-color: rgba(233, 196, 106, 0.4);
+}
+
+.win-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.win-category-badge {
+    font-size: 0.72rem;
+    padding: 2px 8px;
+    border-radius: var(--radius-pill);
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+.badge-mindfulness { background: var(--lavender-light); color: var(--lavender-primary); }
+.badge-health { background: var(--sage-light); color: var(--sage-primary); }
+.badge-productivity { background: var(--peach-light); color: var(--peach-primary); }
+.badge-self-care { background: var(--rose-light); color: var(--rose-primary); }
+.badge-social { background: var(--lavender-light); color: var(--lavender-primary); }
+.badge-creative { background: var(--yellow-light); color: var(--yellow-primary); }
+.badge-general { background: var(--bg-surface-subtle); color: var(--text-secondary); }
+
+.win-del-btn {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    padding: 4px;
+    border-radius: var(--radius-sm);
+    transition: var(--transition-smooth);
+}
+
+.win-del-btn:hover {
+    color: var(--rose-primary);
+}
+
+.win-card-title {
+    font-size: 1.05rem;
+    line-height: 1.4;
+    color: var(--text-primary);
+    word-break: break-word;
+}
+
+.win-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    border-top: 1px solid var(--border-subtle);
+    padding-top: 0.65rem;
+}
+
+.win-celebrate-btn {
+    font-size: 0.78rem;
+    color: var(--yellow-primary);
+    font-weight: 600;
+}

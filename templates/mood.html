@@ -1,0 +1,220 @@
+{% extends 'base.html' %}
+
+{% block title %}Mood Tracker & Insights — MoodMate{% endblock %}
+
+{% block content %}
+<div class="mood-tracker-container">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title"><i class="fa-solid fa-heart-pulse text-lavender"></i> Mood Check-In & History</h1>
+            <p class="page-subtitle">Acknowledge how you feel without judgment. Tracking your emotions builds self-awareness.</p>
+        </div>
+    </div>
+
+    <!-- Mood Logging Card -->
+    <section class="mood-log-card card-shadow">
+        <h2 class="card-section-title">How are you feeling right now?</h2>
+
+        <form id="moodForm" class="mood-entry-form">
+            <!-- Mood Emojis Grid -->
+            <div class="mood-buttons-grid" id="moodGrid">
+                <label class="mood-tile">
+                    <input type="radio" name="mood_type" value="happy" required>
+                    <div class="tile-content">
+                        <span class="tile-emoji">😊</span>
+                        <span class="tile-label">Happy</span>
+                    </div>
+                </label>
+                <label class="mood-tile">
+                    <input type="radio" name="mood_type" value="calm">
+                    <div class="tile-content">
+                        <span class="tile-emoji">🌿</span>
+                        <span class="tile-label">Calm</span>
+                    </div>
+                </label>
+                <label class="mood-tile">
+                    <input type="radio" name="mood_type" value="okay">
+                    <div class="tile-content">
+                        <span class="tile-emoji">🙂</span>
+                        <span class="tile-label">Okay</span>
+                    </div>
+                </label>
+                <label class="mood-tile">
+                    <input type="radio" name="mood_type" value="anxious">
+                    <div class="tile-content">
+                        <span class="tile-emoji">😰</span>
+                        <span class="tile-label">Anxious</span>
+                    </div>
+                </label>
+                <label class="mood-tile">
+                    <input type="radio" name="mood_type" value="sad">
+                    <div class="tile-content">
+                        <span class="tile-emoji">😢</span>
+                        <span class="tile-label">Sad</span>
+                    </div>
+                </label>
+                <label class="mood-tile">
+                    <input type="radio" name="mood_type" value="exhausted">
+                    <div class="tile-content">
+                        <span class="tile-emoji">🥱</span>
+                        <span class="tile-label">Exhausted</span>
+                    </div>
+                </label>
+                <label class="mood-tile">
+                    <input type="radio" name="mood_type" value="lonely">
+                    <div class="tile-content">
+                        <span class="tile-emoji">🥺</span>
+                        <span class="tile-label">Lonely</span>
+                    </div>
+                </label>
+                <label class="mood-tile">
+                    <input type="radio" name="mood_type" value="confused">
+                    <div class="tile-content">
+                        <span class="tile-emoji">😕</span>
+                        <span class="tile-label">Confused</span>
+                    </div>
+                </label>
+                <label class="mood-tile">
+                    <input type="radio" name="mood_type" value="angry">
+                    <div class="tile-content">
+                        <span class="tile-emoji">😤</span>
+                        <span class="tile-label">Angry</span>
+                    </div>
+                </label>
+            </div>
+
+            <!-- Intensity Slider -->
+            <div class="form-group mood-intensity-wrap">
+                <div class="intensity-label-row">
+                    <label for="intensitySlider" class="form-label">Emotion Intensity</label>
+                    <span class="intensity-indicator-badge" id="intensityBadge">Moderate (5/10)</span>
+                </div>
+                <input type="range" min="1" max="10" value="5" class="slider-input" id="intensitySlider" name="intensity">
+                <div class="slider-ticks">
+                    <span>1 (Gentle)</span>
+                    <span>5 (Noticeable)</span>
+                    <span>10 (Overwhelming)</span>
+                </div>
+            </div>
+
+            <!-- Tags Selector -->
+            <div class="form-group">
+                <label class="form-label">What factors influenced this mood? (Tap to select)</label>
+                <div class="tags-selector" id="tagsSelector">
+                    <button type="button" class="tag-pill" data-tag="Work">Work</button>
+                    <button type="button" class="tag-pill" data-tag="Studies">Studies</button>
+                    <button type="button" class="tag-pill" data-tag="Sleep">Sleep</button>
+                    <button type="button" class="tag-pill" data-tag="Family">Family</button>
+                    <button type="button" class="tag-pill" data-tag="Friends">Friends</button>
+                    <button type="button" class="tag-pill" data-tag="Health">Health</button>
+                    <button type="button" class="tag-pill" data-tag="Self-Care">Self-Care</button>
+                    <button type="button" class="tag-pill" data-tag="Weather">Weather</button>
+                </div>
+                <input type="hidden" name="tags" id="selectedTagsInput">
+            </div>
+
+            <!-- Reflection Note -->
+            <div class="form-group">
+                <label for="moodNote" class="form-label">Personal Reflection (Optional)</label>
+                <textarea 
+                    id="moodNote" 
+                    name="note" 
+                    class="form-textarea" 
+                    rows="3" 
+                    placeholder="Want to express what happened or how your body feels right now?"
+                ></textarea>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary btn-lg" id="submitMoodBtn">
+                    <i class="fa-solid fa-heart"></i> Save Mood Check-In
+                </button>
+            </div>
+        </form>
+    </section>
+
+    <!-- Analytics & Charts Section -->
+    <section class="mood-analytics-section">
+        <div class="analytics-header">
+            <h2><i class="fa-solid fa-chart-pie"></i> Mood Patterns & Insights</h2>
+            <p>Non-diagnostic observations to help you understand your emotional rhythm.</p>
+        </div>
+
+        <div class="reflection-box card-shadow" id="reflectionCard">
+            <div class="reflection-icon">🌿</div>
+            <div class="reflection-content">
+                <strong>Wellness Reflection</strong>
+                <p id="reflectionText">Loading your mood insights...</p>
+            </div>
+        </div>
+
+        <div class="charts-grid">
+            <!-- Weekly Trend Chart -->
+            <div class="chart-card card-shadow">
+                <div class="chart-header">
+                    <h3>7-Day Intensity Trend</h3>
+                    <span class="chart-sub">Average daily intensity</span>
+                </div>
+                <div class="chart-canvas-wrap">
+                    <canvas id="weeklyChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Monthly Distribution Chart -->
+            <div class="chart-card card-shadow">
+                <div class="chart-header">
+                    <h3>Mood Breakdown</h3>
+                    <span class="chart-sub">Frequency of recorded feelings</span>
+                </div>
+                <div class="chart-canvas-wrap">
+                    <canvas id="distributionChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Timeline of Previous Entries -->
+    <section class="mood-history-section">
+        <div class="history-header">
+            <h2><i class="fa-solid fa-clock-rotate-left"></i> Previous Mood Check-Ins</h2>
+            <span class="history-count" id="historyCount">0 entries recorded</span>
+        </div>
+
+        <div class="timeline-container" id="moodTimeline">
+            <!-- Loaded dynamically via JavaScript -->
+            <div class="loading-spinner-wrap">
+                <i class="fa-solid fa-spinner fa-spin"></i> Loading entries...
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- Edit Mood Modal -->
+<div class="modal-overlay" id="editMoodModal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3>Edit Mood Entry</h3>
+            <button class="modal-close" onclick="closeEditModal()">&times;</button>
+        </div>
+        <form id="editMoodForm">
+            <input type="hidden" id="editMoodId">
+            <div class="form-group">
+                <label class="form-label">Intensity: <strong id="editIntensityVal">5</strong>/10</label>
+                <input type="range" min="1" max="10" class="slider-input" id="editIntensitySlider">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Reflection Note</label>
+                <textarea class="form-textarea" rows="3" id="editMoodNote"></textarea>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-outline" onclick="closeEditModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/mood.js') }}"></script>
+{% endblock %}

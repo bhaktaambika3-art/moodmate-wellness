@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+
+{% block title %}MoodMate — A Comforting AI Emotional Wellness Sanctuary{% endblock %}
+
+{% block content %}
+<div class="landing-container">
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="hero-badge">
+            <span class="badge-sparkle">✨</span> SkillX Project — BCA Emotional Wellness Initiative
+        </div>
+        <h1 class="hero-title">
+            A gentle space to <span class="gradient-text">feel, reflect,</span> and heal.
+        </h1>
+        <p class="hero-subtitle">
+            Welcome to MoodMate — your private, comforting sanctuary. Track your emotional journey, celebrate tiny achievements, unwind with guided breathing, and talk openly with a supportive AI companion anytime.
+        </p>
+
+        <div class="hero-cta-group">
+            <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg">
+                <i class="fa-solid fa-sparkles"></i> Begin Your Journey
+            </a>
+            <a href="{{ url_for('login') }}" class="btn btn-outline btn-lg">
+                <i class="fa-solid fa-arrow-right-to-bracket"></i> Sign In
+            </a>
+        </div>
+
+        <div class="hero-stats-banner">
+            <div class="stat-pill"><i class="fa-solid fa-lock"></i> 100% Private & Encrypted</div>
+            <div class="stat-pill"><i class="fa-solid fa-microphone"></i> Natural Voice Companion</div>
+            <div class="stat-pill"><i class="fa-solid fa-language"></i> English • Hindi • Bengali</div>
+        </div>
+    </section>
+
+    <!-- Feature Showcase Grid -->
+    <section class="features-section">
+        <div class="section-heading text-center">
+            <span class="sub-badge">Everything You Need</span>
+            <h2>Designed with empathy, built for your peace of mind</h2>
+            <p>Every corner of MoodMate is crafted with soft pastel aesthetics and soothing micro-interactions.</p>
+        </div>
+
+        <div class="features-grid">
+            <!-- Feature 1: AI Companion -->
+            <div class="feature-card card-hover">
+                <div class="feature-icon icon-chat">
+                    <i class="fa-solid fa-comment-dots"></i>
+                </div>
+                <h3>Talk to MoodMate</h3>
+                <p>An intelligent, emotionally attuned AI companion powered by Groq. Converses naturally with memory, empathy, voice replies, and multi-language support (English, Hindi, Bengali).</p>
+                <div class="feature-tags">
+                    <span>Voice Input</span>
+                    <span>Empathetic Tone</span>
+                    <span>Safety Grounding</span>
+                </div>
+            </div>
+
+            <!-- Feature 2: Mood Tracking -->
+            <div class="feature-card card-hover">
+                <div class="feature-icon icon-mood">
+                    <i class="fa-solid fa-heart-pulse"></i>
+                </div>
+                <h3>Mood Check-In & Insights</h3>
+                <p>Express how you feel with dynamic emojis, 1-10 intensity sliders, and reflection notes. Discover your emotional rhythms through weekly and monthly interactive charts.</p>
+                <div class="feature-tags">
+                    <span>Emoji Scale</span>
+                    <span>Intensity Slider</span>
+                    <span>Visual Trends</span>
+                </div>
+            </div>
+
+            <!-- Feature 3: Personal Journal -->
+            <div class="feature-card card-hover">
+                <div class="feature-icon icon-journal">
+                    <i class="fa-solid fa-book-open"></i>
+                </div>
+                <h3>Distraction-Free Journal</h3>
+                <p>Pour your heart out in a calm, soothing writing space. Features gentle writing prompts, autosave drafts, mood tags, and instant search.</p>
+                <div class="feature-tags">
+                    <span>Writing Prompts</span>
+                    <span>Autosave</span>
+                    <span>Private History</span>
+                </div>
+            </div>
+
+            <!-- Feature 4: Calm Corner -->
+            <div class="feature-card card-hover">
+                <div class="feature-icon icon-calm">
+                    <i class="fa-solid fa-spa"></i>
+                </div>
+                <h3>Calm Corner</h3>
+                <p>Guided Box & 4-7-8 breathing animations, ambient sound generator (Rain, Ocean, Forest, Fireplace), and interactive 5-4-3-2-1 grounding exercises.</p>
+                <div class="feature-tags">
+                    <span>Box Breathing</span>
+                    <span>Ambient Mixer</span>
+                    <span>Grounding Wizard</span>
+                </div>
+            </div>
+
+            <!-- Feature 5: Tiny Wins -->
+            <div class="feature-card card-hover">
+                <div class="feature-icon icon-win">
+                    <i class="fa-solid fa-trophy"></i>
+                </div>
+                <h3>Tiny Wins Celebration</h3>
+                <p>No victory is too small. Celebrate drinking water, stepping outside, or completing an assignment with delightful confetti bursts and inspiring streaks.</p>
+                <div class="feature-tags">
+                    <span>Confetti Burst</span>
+                    <span>Category Badges</span>
+                    <span>Milestone Counter</span>
+                </div>
+            </div>
+
+            <!-- Feature 6: Privacy & Control -->
+            <div class="feature-card card-hover">
+                <div class="feature-icon icon-shield">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <h3>Private & Secure</h3>
+                <p>Strict user-scoped accounts. Your mood logs, personal journals, and AI conversations are visible solely to you. Export your complete data anytime.</p>
+                <div class="feature-tags">
+                    <span>Scrypted Passwords</span>
+                    <span>Isolated Accounts</span>
+                    <span>Data Export</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Call to action footer banner -->
+    <section class="cta-banner">
+        <div class="cta-banner-content">
+            <h2>Ready to experience a kinder digital space?</h2>
+            <p>Join MoodMate today and take a comforting breath for your mental wellness.</p>
+            <div class="cta-actions">
+                <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg">Create Free Account</a>
+                <a href="{{ url_for('login') }}" class="btn btn-outline btn-lg">Sign In to Sanctuary</a>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}

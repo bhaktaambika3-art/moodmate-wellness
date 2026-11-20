@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+
+{% block title %}Personal Journal — MoodMate{% endblock %}
+
+{% block content %}
+<div class="journal-container">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title"><i class="fa-solid fa-book-open text-sage"></i> Personal Journal</h1>
+            <p class="page-subtitle">Your private sanctuary to untangle thoughts, reflect on your days, and write freely.</p>
+        </div>
+        <button class="btn btn-primary" id="toggleWriteBtn">
+            <i class="fa-solid fa-pen-fancy"></i> New Entry
+        </button>
+    </div>
+
+    <!-- Writing Space (Collapsible or full view) -->
+    <section class="journal-editor-card card-shadow" id="journalEditorCard">
+        <div class="editor-header">
+            <div class="editor-title-wrap">
+                <span class="editor-icon">✍️</span>
+                <h3>Write New Reflection</h3>
+            </div>
+            <div class="editor-status" id="draftStatus">
+                <span class="autosave-dot"></span> Autosaved locally
+            </div>
+        </div>
+
+        <!-- Writing Prompt Suggestion Box -->
+        <div class="prompt-box">
+            <div class="prompt-content">
+                <span class="prompt-label"><i class="fa-solid fa-lightbulb"></i> Gentle Writing Prompt:</span>
+                <p class="prompt-text" id="activePromptText">"What is one gentle thing you can do for yourself today?"</p>
+            </div>
+            <div class="prompt-actions">
+                <button type="button" class="btn btn-sm btn-outline" id="usePromptBtn" title="Insert prompt into title">
+                    Use Prompt
+                </button>
+                <button type="button" class="btn btn-sm btn-subtle" id="shufflePromptBtn" title="Get another prompt">
+                    <i class="fa-solid fa-shuffle"></i> Shuffle
+                </button>
+            </div>
+        </div>
+
+        <form id="journalForm" class="journal-form">
+            <input type="hidden" id="editingEntryId">
+
+            <div class="form-row-journal">
+                <div class="form-group flex-grow">
+                    <label for="journalTitle" class="form-label">Title</label>
+                    <input 
+                        type="text" 
+                        id="journalTitle" 
+                        class="form-input" 
+                        placeholder="Give your reflection a name..." 
+                        required
+                    >
+                </div>
+
+                <div class="form-group mood-tag-group">
+                    <label for="journalMoodTag" class="form-label">Mood Tag</label>
+                    <select id="journalMoodTag" class="form-select">
+                        <option value="">(None)</option>
+                        <option value="Peaceful 🌿">Peaceful 🌿</option>
+                        <option value="Grateful ✨">Grateful ✨</option>
+                        <option value="Thoughtful 💭">Thoughtful 💭</option>
+                        <option value="Venting 🌧️">Venting 🌧️</option>
+                        <option value="Healing 🌸">Healing 🌸</option>
+                        <option value="Excited 🌟">Excited 🌟</option>
+                        <option value="Tired 🥱">Tired 🥱</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div class="textarea-header">
+                    <label for="journalContent" class="form-label">Your Thoughts</label>
+                    <div class="word-count-badge" id="wordCountBadge">0 words • 0 min read</div>
+                </div>
+                <textarea 
+                    id="journalContent" 
+                    class="form-textarea journal-textarea" 
+                    rows="10" 
+                    placeholder="Write whatever comes naturally to your heart. There is no right or wrong way to feel or write..." 
+                    required
+                ></textarea>
+            </div>
+
+            <div class="editor-footer">
+                <button type="button" class="btn btn-outline" id="clearEditorBtn">Clear</button>
+                <button type="submit" class="btn btn-primary btn-lg" id="saveJournalBtn">
+                    <i class="fa-solid fa-floppy-disk"></i> Save Journal Entry
+                </button>
+            </div>
+        </form>
+    </section>
+
+    <!-- Search & Filter Controls -->
+    <section class="journal-filter-bar">
+        <div class="search-input-wrap">
+            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+            <input 
+                type="text" 
+                id="searchJournalInput" 
+                class="form-input search-input" 
+                placeholder="Search your journal entries by keyword or title..."
+            >
+            <button type="button" class="clear-search-btn" id="clearSearchBtn" style="display: none;">&times;</button>
+        </div>
+        <div class="journal-stats-pill" id="entriesCountPill">0 entries</div>
+    </section>
+
+    <!-- Journal Entries Grid / List -->
+    <section class="journal-entries-section">
+        <div class="journal-grid" id="journalGrid">
+            <!-- Populated via JavaScript -->
+            <div class="loading-spinner-wrap">
+                <i class="fa-solid fa-spinner fa-spin"></i> Loading journal entries...
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- Read / Full View Journal Modal -->
+<div class="modal-overlay" id="readJournalModal">
+    <div class="modal-card modal-large">
+        <div class="modal-header">
+            <div>
+                <span class="entry-mood-badge" id="readMoodTag"></span>
+                <h2 id="readTitle" class="read-modal-title"></h2>
+                <small class="read-modal-date" id="readDate"></small>
+            </div>
+            <button class="modal-close" onclick="closeReadModal()">&times;</button>
+        </div>
+        <div class="read-modal-body">
+            <div id="readContent" class="read-content-text"></div>
+        </div>
+        <div class="modal-actions-space-between">
+            <button type="button" class="btn btn-danger-subtle" id="deleteCurrentEntryBtn">
+                <i class="fa-solid fa-trash-can"></i> Delete
+            </button>
+            <div class="modal-action-right">
+                <button type="button" class="btn btn-outline" id="editCurrentEntryBtn">
+                    <i class="fa-solid fa-pen-to-square"></i> Edit
+                </button>
+                <button type="button" class="btn btn-primary" onclick="closeReadModal()">Done</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/journal.js') }}"></script>
+{% endblock %}

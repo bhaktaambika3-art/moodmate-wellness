@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+
+{% block title %}Tiny Wins — Celebrate Every Step | MoodMate{% endblock %}
+
+{% block content %}
+<div class="wins-page-container">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title"><i class="fa-solid fa-trophy text-yellow"></i> Tiny Wins Celebration</h1>
+            <p class="page-subtitle">Big journeys are made of small steps. Celebrate getting out of bed, drinking water, or finishing a task!</p>
+        </div>
+        <button class="btn btn-primary" id="openAddWinBtn">
+            <i class="fa-solid fa-plus"></i> Celebrate a Win
+        </button>
+    </div>
+
+    <!-- Celebration Hero Banner -->
+    <section class="wins-stats-banner card-shadow">
+        <div class="banner-stat-item">
+            <span class="stat-number" id="totalWinsCounter">0</span>
+            <span class="stat-label">Total Tiny Wins</span>
+        </div>
+        <div class="banner-divider"></div>
+        <div class="banner-stat-item">
+            <span class="stat-number" id="recentWinsCounter">0</span>
+            <span class="stat-label">Wins This Week</span>
+        </div>
+        <div class="banner-divider"></div>
+        <div class="banner-stat-item motivation-item">
+            <span class="stat-quote-text">"Progress is not about speed; it is about direction."</span>
+            <span class="stat-quote-sub">Celebrate yourself today ✨</span>
+        </div>
+    </section>
+
+    <!-- Add Win Inline Card -->
+    <section class="add-win-card card-shadow" id="addWinCard" style="display: none;">
+        <div class="card-header-row">
+            <h3><i class="fa-solid fa-sparkles"></i> Log a New Tiny Win</h3>
+            <button type="button" class="close-card-btn" id="closeAddWinBtn">&times;</button>
+        </div>
+        <form id="addWinForm" class="win-form">
+            <div class="form-group">
+                <label for="winTitle" class="form-label">What did you accomplish?</label>
+                <input 
+                    type="text" 
+                    id="winTitle" 
+                    class="form-input" 
+                    placeholder="e.g. Drank 2 glasses of water, studied for 20 mins, took a walk..." 
+                    required 
+                    autocomplete="off"
+                >
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Category</label>
+                <div class="category-chips-select" id="categoryChips">
+                    <button type="button" class="category-chip active" data-cat="mindfulness">🧘 Mindfulness</button>
+                    <button type="button" class="category-chip" data-cat="health">🥗 Health</button>
+                    <button type="button" class="category-chip" data-cat="productivity">💻 Productivity</button>
+                    <button type="button" class="category-chip" data-cat="self-care">🌸 Self-Care</button>
+                    <button type="button" class="category-chip" data-cat="social">💬 Social</button>
+                    <button type="button" class="category-chip" data-cat="creative">🎨 Creative</button>
+                    <button type="button" class="category-chip" data-cat="general">✨ General</button>
+                </div>
+                <input type="hidden" id="selectedCategory" value="mindfulness">
+            </div>
+
+            <div class="form-actions-win">
+                <button type="button" class="btn btn-outline" id="cancelWinBtn">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="saveWinBtn">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> Celebrate & Save!
+                </button>
+            </div>
+        </form>
+    </section>
+
+    <!-- Filter by Category Chips -->
+    <div class="wins-filter-bar">
+        <span class="filter-label"><i class="fa-solid fa-filter"></i> Filter:</span>
+        <div class="filter-pills-wrap">
+            <button class="filter-pill active" data-filter="all">All Wins</button>
+            <button class="filter-pill" data-filter="mindfulness">Mindfulness</button>
+            <button class="filter-pill" data-filter="health">Health</button>
+            <button class="filter-pill" data-filter="productivity">Productivity</button>
+            <button class="filter-pill" data-filter="self-care">Self-Care</button>
+            <button class="filter-pill" data-filter="social">Social</button>
+            <button class="filter-pill" data-filter="creative">Creative</button>
+        </div>
+    </div>
+
+    <!-- Wins List / Grid -->
+    <div class="wins-grid" id="winsGrid">
+        <div class="loading-spinner-wrap">
+            <i class="fa-solid fa-spinner fa-spin"></i> Loading your wins...
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/wins.js') }}"></script>
+{% endblock %}

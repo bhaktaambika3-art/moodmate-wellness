@@ -1,0 +1,239 @@
+{% extends 'base.html' %}
+
+{% block title %}Calm Corner — MoodMate{% endblock %}
+
+{% block content %}
+<div class="calm-page-container">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title"><i class="fa-solid fa-spa text-peach"></i> Calm Corner</h1>
+            <p class="page-subtitle">A sensory oasis to slow your racing thoughts, regulate your nervous system, and return to center.</p>
+        </div>
+    </div>
+
+    <!-- Navigation Tabs for Calm Corner -->
+    <div class="calm-nav-tabs">
+        <button class="calm-tab-btn active" data-tab="breathing">
+            <i class="fa-solid fa-lungs"></i> Guided Breathing
+        </button>
+        <button class="calm-tab-btn" data-tab="soundscapes">
+            <i class="fa-solid fa-headphones"></i> Ambient Soundscapes
+        </button>
+        <button class="calm-tab-btn" data-tab="grounding">
+            <i class="fa-solid fa-hand-holding-heart"></i> 5-4-3-2-1 Grounding
+        </button>
+        <button class="calm-tab-btn" data-tab="affirmations">
+            <i class="fa-solid fa-sun"></i> Positive Affirmations
+        </button>
+    </div>
+
+    <!-- TAB 1: GUIDED BREATHING -->
+    <div class="calm-tab-pane active" id="tab-breathing">
+        <div class="breathing-card card-shadow">
+            <div class="breathing-controls-top">
+                <div class="pattern-selector">
+                    <label class="pattern-label">Technique:</label>
+                    <select id="breathingTechniqueSelect" class="form-select-sm">
+                        <option value="box">Box Breathing (4-4-4-4) — Navy SEAL Calm</option>
+                        <option value="relax">4-7-8 Relaxing Breath — Deep Sleep</option>
+                        <option value="calm">Equal Calm (5-5) — Emotional Balance</option>
+                    </select>
+                </div>
+                <div class="cycle-counter-badge" id="cycleCounter">
+                    <span>Cycles: <strong>0</strong></span>
+                </div>
+            </div>
+
+            <!-- Breathing Visualizer Ring -->
+            <div class="breathing-visualizer-container">
+                <div class="breathing-circle-outer" id="breathingCircleOuter">
+                    <div class="breathing-circle-inner" id="breathingCircleInner">
+                        <span class="breathing-phase-text" id="breathingPhaseText">Ready</span>
+                        <span class="breathing-timer-number" id="breathingTimerNumber">4</span>
+                    </div>
+                </div>
+            </div>
+
+            <p class="breathing-instruction" id="breathingInstruction">
+                Press Start to begin your guided calming breath cycle.
+            </p>
+
+            <div class="breathing-buttons-row">
+                <button type="button" class="btn btn-primary btn-lg" id="startBreathingBtn">
+                    <i class="fa-solid fa-play"></i> Start Breathing
+                </button>
+                <button type="button" class="btn btn-outline" id="pauseBreathingBtn" style="display: none;">
+                    <i class="fa-solid fa-pause"></i> Pause
+                </button>
+                <button type="button" class="btn btn-subtle" id="resetBreathingBtn">
+                    <i class="fa-solid fa-arrow-rotate-left"></i> Reset
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 2: AMBIENT SOUNDSCAPES (100% Web Audio API procedural synthesis) -->
+    <div class="calm-tab-pane" id="tab-soundscapes">
+        <div class="soundscapes-card card-shadow">
+            <div class="soundscape-intro">
+                <div class="soundscape-title-wrap">
+                    <span class="section-icon">🎧</span>
+                    <div>
+                        <h3>Natural Procedural Soundscapes</h3>
+                        <p>Synthesized directly in your browser using pure Web Audio API. 100% offline, smooth, and relaxing.</p>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-outline btn-sm" id="stopAllSoundsBtn">
+                    <i class="fa-solid fa-volume-xmark"></i> Silence All
+                </button>
+            </div>
+
+            <div class="sounds-grid">
+                <!-- Sound 1: Gentle Rain -->
+                <div class="sound-channel-card" data-sound="rain">
+                    <div class="sound-channel-top">
+                        <span class="sound-emoji">🌧️</span>
+                        <div class="sound-meta">
+                            <h4>Soothing Rain</h4>
+                            <small>Continuous soft rainfall</small>
+                        </div>
+                        <button type="button" class="sound-toggle-btn" data-sound="rain" aria-label="Toggle Rain">
+                            <i class="fa-solid fa-play"></i>
+                        </button>
+                    </div>
+                    <div class="sound-volume-slider-wrap">
+                        <i class="fa-solid fa-volume-low"></i>
+                        <input type="range" min="0" max="1" step="0.05" value="0.7" class="sound-volume" data-sound="rain">
+                        <i class="fa-solid fa-volume-high"></i>
+                    </div>
+                </div>
+
+                <!-- Sound 2: Ocean Waves -->
+                <div class="sound-channel-card" data-sound="ocean">
+                    <div class="sound-channel-top">
+                        <span class="sound-emoji">🌊</span>
+                        <div class="sound-meta">
+                            <h4>Ocean Waves</h4>
+                            <small>Rhythmic tidal ebb & flow</small>
+                        </div>
+                        <button type="button" class="sound-toggle-btn" data-sound="ocean" aria-label="Toggle Ocean">
+                            <i class="fa-solid fa-play"></i>
+                        </button>
+                    </div>
+                    <div class="sound-volume-slider-wrap">
+                        <i class="fa-solid fa-volume-low"></i>
+                        <input type="range" min="0" max="1" step="0.05" value="0.6" class="sound-volume" data-sound="ocean">
+                        <i class="fa-solid fa-volume-high"></i>
+                    </div>
+                </div>
+
+                <!-- Sound 3: Forest Breeze -->
+                <div class="sound-channel-card" data-sound="forest">
+                    <div class="sound-channel-top">
+                        <span class="sound-emoji">🍃</span>
+                        <div class="sound-meta">
+                            <h4>Forest Breeze</h4>
+                            <small>Rustling leaves & gentle wind</small>
+                        </div>
+                        <button type="button" class="sound-toggle-btn" data-sound="forest" aria-label="Toggle Forest">
+                            <i class="fa-solid fa-play"></i>
+                        </button>
+                    </div>
+                    <div class="sound-volume-slider-wrap">
+                        <i class="fa-solid fa-volume-low"></i>
+                        <input type="range" min="0" max="1" step="0.05" value="0.5" class="sound-volume" data-sound="forest">
+                        <i class="fa-solid fa-volume-high"></i>
+                    </div>
+                </div>
+
+                <!-- Sound 4: Warm Fireplace -->
+                <div class="sound-channel-card" data-sound="fire">
+                    <div class="sound-channel-top">
+                        <span class="sound-emoji">🔥</span>
+                        <div class="sound-meta">
+                            <h4>Warm Fireplace</h4>
+                            <small>Gentle crackles & embers</small>
+                        </div>
+                        <button type="button" class="sound-toggle-btn" data-sound="fire" aria-label="Toggle Fireplace">
+                            <i class="fa-solid fa-play"></i>
+                        </button>
+                    </div>
+                    <div class="sound-volume-slider-wrap">
+                        <i class="fa-solid fa-volume-low"></i>
+                        <input type="range" min="0" max="1" step="0.05" value="0.6" class="sound-volume" data-sound="fire">
+                        <i class="fa-solid fa-volume-high"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 3: 5-4-3-2-1 GROUNDING EXERCISE -->
+    <div class="calm-tab-pane" id="tab-grounding">
+        <div class="grounding-card card-shadow">
+            <div class="grounding-header">
+                <span class="grounding-step-badge" id="groundingStepBadge">Step 1 of 5</span>
+                <h3 id="groundingStepTitle">5 Things You Can See</h3>
+                <p id="groundingStepDesc">Look around your room. Notice five objects you might usually overlook — their shape, color, or shadow.</p>
+            </div>
+
+            <div class="grounding-check-items" id="groundingItemsList">
+                <label class="grounding-checkbox-row">
+                    <input type="checkbox" class="grounding-item-chk">
+                    <span>1. First object you see</span>
+                </label>
+                <label class="grounding-checkbox-row">
+                    <input type="checkbox" class="grounding-item-chk">
+                    <span>2. Second object you see</span>
+                </label>
+                <label class="grounding-checkbox-row">
+                    <input type="checkbox" class="grounding-item-chk">
+                    <span>3. Third object you see</span>
+                </label>
+                <label class="grounding-checkbox-row">
+                    <input type="checkbox" class="grounding-item-chk">
+                    <span>4. Fourth object you see</span>
+                </label>
+                <label class="grounding-checkbox-row">
+                    <input type="checkbox" class="grounding-item-chk">
+                    <span>5. Fifth object you see</span>
+                </label>
+            </div>
+
+            <div class="grounding-actions-row">
+                <button type="button" class="btn btn-outline" id="prevGroundingStepBtn" style="display: none;">
+                    &larr; Previous Step
+                </button>
+                <button type="button" class="btn btn-primary" id="nextGroundingStepBtn" disabled>
+                    Next Step &rarr;
+                </button>
+                <button type="button" class="btn btn-subtle" id="resetGroundingBtn">
+                    Reset
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 4: POSITIVE AFFIRMATIONS -->
+    <div class="calm-tab-pane" id="tab-affirmations">
+        <div class="affirmations-card card-shadow">
+            <div class="affirmation-badge-pill">Daily Gentle Affirmation</div>
+            <div class="affirmation-display" id="affirmationText">
+                "I am doing the best I can today, and that is more than enough."
+            </div>
+            <div class="affirmation-author" id="affirmationTag">
+                🌸 Self-Compassion
+            </div>
+            <div class="affirmation-actions">
+                <button type="button" class="btn btn-primary" id="nextAffirmationBtn">
+                    <i class="fa-solid fa-sparkles"></i> Next Affirmation
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/calm.js') }}"></script>
+{% endblock %}

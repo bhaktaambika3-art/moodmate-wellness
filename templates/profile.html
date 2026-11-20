@@ -1,0 +1,202 @@
+{% extends 'base.html' %}
+
+{% block title %}User Profile & Settings — MoodMate{% endblock %}
+
+{% block content %}
+<div class="profile-page-container">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title"><i class="fa-solid fa-sliders text-lavender"></i> Profile & Settings</h1>
+            <p class="page-subtitle">Manage your personal sanctuary preferences, voice companion, theme, and data.</p>
+        </div>
+    </div>
+
+    <div class="profile-grid">
+        <!-- Card 1: Personal Details & Avatar -->
+        <section class="profile-card card-shadow">
+            <div class="profile-card-header">
+                <h3><i class="fa-solid fa-user-circle"></i> Personal Sanctuary Profile</h3>
+            </div>
+            <form id="profileForm" class="profile-form">
+                <div class="avatar-selection-wrap">
+                    <label class="form-label">Pick Your Avatar</label>
+                    <div class="avatar-emojis-row" id="avatarPicker">
+                        <button type="button" class="avatar-option {% if user.avatar == '🌸' %}selected{% endif %}" data-emoji="🌸">🌸</button>
+                        <button type="button" class="avatar-option {% if user.avatar == '🌿' %}selected{% endif %}" data-emoji="🌿">🌿</button>
+                        <button type="button" class="avatar-option {% if user.avatar == '✨' %}selected{% endif %}" data-emoji="✨">✨</button>
+                        <button type="button" class="avatar-option {% if user.avatar == '🐱' %}selected{% endif %}" data-emoji="🐱">🐱</button>
+                        <button type="button" class="avatar-option {% if user.avatar == '☕' %}selected{% endif %}" data-emoji="☕">☕</button>
+                        <button type="button" class="avatar-option {% if user.avatar == '🦋' %}selected{% endif %}" data-emoji="🦋">🦋</button>
+                        <button type="button" class="avatar-option {% if user.avatar == '🌻' %}selected{% endif %}" data-emoji="🌻">🌻</button>
+                        <button type="button" class="avatar-option {% if user.avatar == '🥑' %}selected{% endif %}" data-emoji="🥑">🥑</button>
+                    </div>
+                    <input type="hidden" id="selectedAvatar" value="{{ user.avatar or '🌸' }}">
+                </div>
+
+                <div class="form-group">
+                    <label for="profileName" class="form-label">Preferred Name</label>
+                    <input type="text" id="profileName" class="form-input" value="{{ user.name }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Email Address</label>
+                    <input type="email" class="form-input" value="{{ user.email }}" readonly disabled>
+                    <small class="form-hint">Email is linked to your private account and cannot be changed.</small>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Appearance Theme</label>
+                    <div class="theme-choice-pills">
+                        <label class="theme-choice-label">
+                            <input type="radio" name="theme_pref" value="system" {% if user.theme_preference == 'system' %}checked{% endif %}>
+                            <span><i class="fa-solid fa-laptop"></i> System</span>
+                        </label>
+                        <label class="theme-choice-label">
+                            <input type="radio" name="theme_pref" value="light" {% if user.theme_preference == 'light' %}checked{% endif %}>
+                            <span><i class="fa-solid fa-sun"></i> Light Pastel</span>
+                        </label>
+                        <label class="theme-choice-label">
+                            <input type="radio" name="theme_pref" value="dark" {% if user.theme_preference == 'dark' %}checked{% endif %}>
+                            <span><i class="fa-solid fa-moon"></i> Deep Plum (Dark)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary" id="saveProfileBtn">
+                    <i class="fa-solid fa-check"></i> Save Profile Details
+                </button>
+            </form>
+        </section>
+
+        <!-- Card 2: AI Voice Companion Settings -->
+        <section class="profile-card card-shadow">
+            <div class="profile-card-header">
+                <h3><i class="fa-solid fa-microphone-lines"></i> AI Voice Companion Preferences</h3>
+            </div>
+            <form id="voiceSettingsForm" class="profile-form">
+                <div class="form-group">
+                    <label for="voicePrefSelect" class="form-label">Default Voice Personality</label>
+                    <select id="voicePrefSelect" class="form-select">
+                        {% for v in voice_profiles %}
+                        <option value="{{ v.id }}" {% if user.voice_preference == v.id %}selected{% endif %}>
+                            {{ v.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <div class="voice-preview-row">
+                        <button type="button" class="btn btn-outline btn-sm" id="testVoiceBtn">
+                            <i class="fa-solid fa-play"></i> Test Voice Sample
+                        </button>
+                        <small class="text-muted" id="testVoiceStatus"></small>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="speedRange" class="form-label">
+                        Speaking Pace: <strong id="speedValLabel">{{ user.voice_speed or 1.0 }}x</strong>
+                    </label>
+                    <input type="range" id="speedRange" min="0.75" max="1.3" step="0.05" value="{{ user.voice_speed or 1.0 }}" class="slider-input">
+                    <div class="slider-ticks">
+                        <span>Gentle (0.75x)</span>
+                        <span>Normal (1.0x)</span>
+                        <span>Brisk (1.3x)</span>
+                    </div>
+                </div>
+
+                <div class="form-check-group">
+                    <label class="custom-checkbox">
+                        <input type="checkbox" id="autoSpeakCheck" {% if user.auto_speak %}checked{% endif %}>
+                        <span class="checkmark"></span>
+                        <span class="checkbox-label">Automatically speak AI replies when new messages arrive</span>
+                    </label>
+                </div>
+
+                <button type="submit" class="btn btn-primary" id="saveVoiceSettingsBtn">
+                    <i class="fa-solid fa-check"></i> Save Voice Preferences
+                </button>
+            </form>
+        </section>
+
+        <!-- Card 3: Change Password -->
+        <section class="profile-card card-shadow">
+            <div class="profile-card-header">
+                <h3><i class="fa-solid fa-lock"></i> Security & Password</h3>
+            </div>
+            <form id="changePasswordForm" class="profile-form">
+                <div class="form-group">
+                    <label for="currentPassword" class="form-label">Current Password</label>
+                    <input type="password" id="currentPassword" class="form-input" required autocomplete="current-password">
+                </div>
+                <div class="form-group">
+                    <label for="newPassword" class="form-label">New Password</label>
+                    <input type="password" id="newPassword" class="form-input" placeholder="At least 6 characters" required autocomplete="new-password">
+                </div>
+                <div class="form-group">
+                    <label for="confirmNewPassword" class="form-label">Confirm New Password</label>
+                    <input type="password" id="confirmNewPassword" class="form-input" required autocomplete="new-password">
+                </div>
+                <button type="submit" class="btn btn-outline" id="changePasswordBtn">
+                    Update Password
+                </button>
+            </form>
+        </section>
+
+        <!-- Card 4: Data Privacy, Export & Danger Zone -->
+        <section class="profile-card card-shadow">
+            <div class="profile-card-header">
+                <h3><i class="fa-solid fa-shield-halved"></i> Data Privacy & Account</h3>
+            </div>
+            <div class="privacy-section-body">
+                <div class="privacy-export-item">
+                    <div>
+                        <strong>Export My Wellness Data</strong>
+                        <p>Download a complete JSON backup containing all your mood check-ins, journal entries, and tiny wins.</p>
+                    </div>
+                    <a href="{{ url_for('api_export_user_data') }}" class="btn btn-outline btn-sm">
+                        <i class="fa-solid fa-download"></i> Download Backup
+                    </a>
+                </div>
+
+                <div class="divider-subtle"></div>
+
+                <div class="danger-zone-item">
+                    <div>
+                        <strong class="text-danger">Delete Sanctuary Account</strong>
+                        <p class="text-muted">Permanently deletes your account and all associated journals, mood entries, and chat records.</p>
+                    </div>
+                    <button type="button" class="btn btn-danger-subtle btn-sm" id="openDeleteAccountBtn">
+                        <i class="fa-solid fa-trash-can"></i> Delete Account
+                    </button>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+
+<!-- Delete Account Confirmation Modal -->
+<div class="modal-overlay" id="deleteAccountModal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3>Delete Account Confirmation</h3>
+            <button class="modal-close" onclick="closeDeleteModal()">&times;</button>
+        </div>
+        <p class="modal-body-text">
+            Are you sure you want to permanently delete your MoodMate account? <strong>This action cannot be undone</strong>, and all your journal entries and moods will be erased.
+        </p>
+        <form id="deleteAccountForm">
+            <div class="form-group">
+                <label for="deleteConfirmPassword" class="form-label">Enter your password to confirm:</label>
+                <input type="password" id="deleteConfirmPassword" class="form-input" required>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-outline" onclick="closeDeleteModal()">Cancel</button>
+                <button type="submit" class="btn btn-danger">Yes, Delete Everything</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/profile.js') }}"></script>
+{% endblock %}

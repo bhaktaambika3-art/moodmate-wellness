@@ -1,0 +1,195 @@
+{% extends 'base.html' %}
+
+{% block title %}Talk to MoodMate — AI Companion{% endblock %}
+
+{% block content %}
+<div class="chat-app-container">
+    <!-- Chat Sidebar / History Drawer -->
+    <aside class="chat-sidebar" id="chatSidebar">
+        <div class="chat-sidebar-header">
+            <button class="btn btn-primary btn-block new-chat-btn" id="newChatBtn">
+                <i class="fa-solid fa-plus"></i> New Conversation
+            </button>
+        </div>
+
+        <div class="conversations-list-wrap">
+            <div class="conversations-list-label">
+                <span>Recent Conversations</span>
+            </div>
+            <div class="conversations-list" id="conversationsList">
+                <div class="chat-loading-item">
+                    <i class="fa-solid fa-spinner fa-spin"></i> Loading conversations...
+                </div>
+            </div>
+        </div>
+
+        <div class="chat-sidebar-disclaimer">
+            <p><i class="fa-solid fa-heart-pulse"></i> <strong>Safe AI Companion:</strong> MoodMate listens with empathy. It does not replace medical advice or therapy.</p>
+        </div>
+    </aside>
+
+    <!-- Main Chat Window -->
+    <section class="chat-main-window">
+        <!-- Chat Header Bar -->
+        <header class="chat-header-bar">
+            <div class="chat-header-left">
+                <button class="toggle-conv-btn" id="toggleConvSidebarBtn" aria-label="Toggle conversations list" title="Conversations">
+                    <i class="fa-solid fa-bars-staggered"></i>
+                </button>
+                <div class="companion-avatar-wrap">
+                    <span class="companion-avatar">🌸</span>
+                    <span class="status-online-dot" title="Ready to chat"></span>
+                </div>
+                <div class="companion-info">
+                    <h2 class="companion-name">MoodMate</h2>
+                    <span class="companion-sub" id="companionStatus">Listening warmly • Groq AI</span>
+                </div>
+            </div>
+
+            <!-- Voice and Chat Controls -->
+            <div class="chat-header-actions">
+                <!-- Voice replies toggle -->
+                <button type="button" class="action-icon-btn voice-toggle-btn" id="voiceRepliesToggle" title="Enable/Disable voice replies" aria-label="Toggle voice replies">
+                    <i class="fa-solid fa-volume-high" id="voiceToggleIcon"></i>
+                    <span class="btn-text-hide-mobile" id="voiceToggleText">Voice On</span>
+                </button>
+
+                <!-- Voice personality picker dropdown -->
+                <div class="voice-picker-dropdown-wrap">
+                    <button type="button" class="action-icon-btn" id="voicePickerBtn" title="Choose AI Voice Personality">
+                        <i class="fa-solid fa-microphone-lines"></i>
+                        <span class="btn-text-hide-mobile" id="currentVoiceLabel">Aria (Warm)</span>
+                        <i class="fa-solid fa-chevron-down caret-icon"></i>
+                    </button>
+                    <div class="voice-dropdown-menu" id="voiceDropdownMenu">
+                        <div class="dropdown-header">
+                            <span>Select AI Voice Personality</span>
+                        </div>
+                        <div class="voice-options-list">
+                            {% for v in voice_profiles %}
+                            <div class="voice-option-row" data-voice-id="{{ v.id }}" data-voice-name="{{ v.name }}">
+                                <div class="voice-option-text">
+                                    <strong>{{ v.name }}</strong>
+                                    <small>{{ v.description }}</small>
+                                </div>
+                                <button type="button" class="btn-preview-voice" data-voice-id="{{ v.id }}" title="Preview Voice">
+                                    <i class="fa-solid fa-play"></i>
+                                </button>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <div class="voice-speed-slider-wrap">
+                            <label class="speed-label">
+                                Speaking Speed: <strong id="speedValueDisplay">1.0x</strong>
+                            </label>
+                            <input type="range" min="0.75" max="1.3" step="0.05" value="1.0" id="voiceSpeedSlider" class="slider-input">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stop audio speaking button -->
+                <button type="button" class="action-icon-btn stop-speaking-btn" id="stopAudioBtn" style="display: none;" title="Stop AI Voice">
+                    <i class="fa-solid fa-circle-stop"></i>
+                    <span class="btn-text-hide-mobile">Stop Speaking</span>
+                </button>
+
+                <!-- Delete current conversation button -->
+                <button type="button" class="action-icon-btn btn-danger-icon" id="deleteCurrentConvBtn" title="Delete conversation">
+                    <i class="fa-solid fa-trash-can"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Messages Area -->
+        <div class="chat-messages-container" id="chatMessagesContainer">
+            <!-- Messages will be injected here via JavaScript -->
+            <div class="chat-welcome-placeholder" id="chatWelcomePlaceholder">
+                <div class="placeholder-icon">🌸</div>
+                <h3>Welcome to MoodMate Sanctuary</h3>
+                <p>Feel free to speak about whatever is on your mind. You can share joys, frustrations, anxieties, or ask for mindful perspective.</p>
+                <div class="chat-starter-chips">
+                    <button class="starter-chip" data-text="I've been feeling quite overwhelmed today, can you help me relax?">
+                        "I've been feeling overwhelmed..."
+                    </button>
+                    <button class="starter-chip" data-text="Aaj ka din thoda stressful tha, mujhe aapse baat karni thi.">
+                        "Aaj ka din stressful tha..."
+                    </button>
+                    <button class="starter-chip" data-text="I accomplished something small today and wanted to share it with you!">
+                        "I achieved something small today!"
+                    </button>
+                    <button class="starter-chip" data-text="আমি আজ খুব ক্লান্ত বোধ করছি, মন ভালো নেই।">
+                        "মন ভালো নেই, খুব ক্লান্ত..."
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Typing / Processing Indicator -->
+        <div class="typing-indicator-bar" id="typingIndicator" style="display: none;">
+            <div class="typing-bubble">
+                <span class="companion-mini-avatar">🌸</span>
+                <span class="typing-text">MoodMate is reflecting</span>
+                <div class="typing-dots">
+                    <span></span><span></span><span></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Input Footer -->
+        <footer class="chat-input-footer">
+            <form id="chatForm" class="chat-input-form">
+                <input type="hidden" id="activeConversationId" value="">
+
+                <!-- Speech recognition active banner -->
+                <div class="stt-active-indicator" id="sttIndicator" style="display: none;">
+                    <div class="pulse-ring"></div>
+                    <span><i class="fa-solid fa-microphone"></i> Listening... Speak in English, Hindi, or Bengali</span>
+                    <button type="button" id="cancelSttBtn" class="cancel-stt">&times;</button>
+                </div>
+
+                <div class="input-actions-bar">
+                    <!-- Microphone STT button -->
+                    <button 
+                        type="button" 
+                        class="mic-btn" 
+                        id="micBtn" 
+                        title="Click to speak (Speech-to-text)" 
+                        aria-label="Use Microphone"
+                    >
+                        <i class="fa-solid fa-microphone"></i>
+                    </button>
+
+                    <!-- Textarea input -->
+                    <textarea 
+                        id="chatInputText" 
+                        class="chat-textarea" 
+                        rows="1" 
+                        placeholder="Type a message or tap microphone to speak... (Supports English, Hindi, Bengali)" 
+                        aria-label="Your message"
+                    ></textarea>
+
+                    <!-- Send button -->
+                    <button 
+                        type="submit" 
+                        class="send-btn" 
+                        id="sendBtn" 
+                        title="Send message" 
+                        aria-label="Send message"
+                    >
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </button>
+                </div>
+
+                <div class="input-bottom-hints">
+                    <span>Press <kbd>Enter</kbd> to send, <kbd>Shift + Enter</kbd> for new line</span>
+                    <span class="lang-pill"><i class="fa-solid fa-globe"></i> English • हिंदी • বাংলা</span>
+                </div>
+            </form>
+        </footer>
+    </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+{% endblock %}
