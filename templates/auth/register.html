@@ -12,6 +12,7 @@
         </div>
 
         <form method="POST" action="{{ url_for('register') }}" class="auth-form" id="registerForm" novalidate>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
             <div class="form-group">
                 <label for="name" class="form-label">Preferred Name</label>
                 <div class="input-with-icon">

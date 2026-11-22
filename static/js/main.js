@@ -1,7 +1,38 @@
 /**
  * MoodMate — Main Global JavaScript (main.js)
- * Theme toggle, mobile drawer navigation, flash messages, utilities.
+ * Theme toggle, mobile drawer navigation, flash messages, utilities, CSRF fetch protection.
  */
+
+// ==========================================
+// CSRF TOKEN FETCH INTERCEPTOR
+// Automatically attaches X-CSRFToken to mutating requests
+// ==========================================
+(function() {
+    const originalFetch = window.fetch;
+    window.fetch = function(url, options = {}) {
+        options = options || {};
+        const method = (options.method || 'GET').toUpperCase();
+        if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)) {
+            const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+            const token = csrfMeta ? csrfMeta.getAttribute('content') : '';
+            if (token) {
+                if (!options.headers) {
+                    options.headers = {};
+                }
+                if (options.headers instanceof Headers) {
+                    if (!options.headers.has('X-CSRFToken')) {
+                        options.headers.set('X-CSRFToken', token);
+                    }
+                } else if (Array.isArray(options.headers)) {
+                    options.headers.push(['X-CSRFToken', token]);
+                } else {
+                    options.headers['X-CSRFToken'] = token;
+                }
+            }
+        }
+        return originalFetch.call(this, url, options);
+    };
+})();
 
 document.addEventListener('DOMContentLoaded', () => {
     initTheme();

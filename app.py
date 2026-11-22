@@ -1,14 +1,16 @@
 import os
 import random
+import secrets
 from datetime import datetime, timezone, timedelta
 from flask import (
     Flask, render_template, request, redirect, url_for,
-    session, flash, jsonify, make_response
+    session, flash, jsonify, make_response, g
 )
+from werkzeug.middleware.proxy_fix import ProxyFix
 from sqlalchemy import func, desc
 
 from config import Config
-from models import db, User, MoodEntry, JournalEntry, TinyWin, Conversation, ChatMessage
+from models import db, User, MoodEntry, JournalEntry, TinyWin, Conversation, ChatMessage, ensure_schema_compatibility
 from groq_service import generate_chat_response
 from tts_service import get_voice_profiles
 from utils import (
@@ -20,26 +22,102 @@ from utils import (
 app = Flask(__name__)
 app.config.from_object(Config)
 
+# Proper proxy headers handling for Render and HTTPS reverse proxies
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
+
 # Initialize database
 db.init_app(app)
 
-# Ensure tables are created
-with app.app_context():
-    db.create_all()
+# Ensure tables and compatible schema exist without overwriting or deleting any existing records
+ensure_schema_compatibility(app)
+
+# ==========================================
+# SECURITY & SESSION HOOKS
+# ==========================================
+
+@app.before_request
+def before_request_security_and_auth():
+    # 1. Ensure CSRF token is present in session
+    if 'csrf_token' not in session:
+        session['csrf_token'] = secrets.token_hex(32)
+
+    # 2. Strict User & Session Validation
+    # Guarantees that users cannot accidentally or maliciously access another user's account,
+    # even across SQLite database wipes, reused numeric IDs, or stale session cookies.
+    g.current_user = None
+    user_id = session.get('user_id')
+    if user_id is not None:
+        user = db.session.get(User, user_id)
+        session_token = session.get('session_token')
+        session_email = session.get('user_email')
+
+        # Require that:
+        # - User exists in database
+        # - User has a valid session token that matches the session cookie exactly
+        # - User email matches the session cookie
+        if (not user or 
+            not user.session_token or 
+            user.session_token != session_token or 
+            user.email != session_email):
+            # Invalid, stale, wiped, or hijacked session detected.
+            # Clear invalid session immediately and keep only a fresh CSRF token.
+            csrf = session.get('csrf_token')
+            session.clear()
+            if csrf:
+                session['csrf_token'] = csrf
+            g.current_user = None
+        else:
+            g.current_user = user
+
+    # 3. CSRF Validation on State-Changing HTTP Methods
+    if request.method in ('POST', 'PUT', 'DELETE', 'PATCH'):
+        # Allow automated test suites to bypass unless explicitly enforcing CSRF
+        if not app.config.get('TESTING') or app.config.get('TEST_CSRF_ENFORCED'):
+            client_token = (
+                request.headers.get('X-CSRFToken') or 
+                request.headers.get('X-CSRF-Token') or 
+                request.form.get('csrf_token')
+            )
+            if not client_token and request.is_json:
+                try:
+                    client_token = (request.get_json(silent=True) or {}).get('csrf_token')
+                except Exception:
+                    pass
+
+            expected_token = session.get('csrf_token')
+            if not expected_token or not client_token or not secrets.compare_digest(str(expected_token), str(client_token)):
+                if request.is_json or request.path.startswith('/api/'):
+                    return jsonify({'error': 'CSRF validation failed or token missing.'}), 400
+                flash('Security token invalid or expired. Please submit the form again.', 'error')
+                return redirect(request.referrer or url_for('login'))
+
+
+@app.after_request
+def add_security_headers(response):
+    # 1. Prevent browser and proxy caching of sensitive user pages and all API routes
+    if getattr(g, 'current_user', None) or 'user_id' in session or request.path.startswith('/api/'):
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+
+    # 2. Defensive HTTP headers
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'DENY'
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    return response
+
 
 # Context processor for templates
 @app.context_processor
 def inject_globals():
-    current_user = None
-    if 'user_id' in session:
-        current_user = db.session.get(User, session['user_id'])
-    
     # Pick daily motivation based on day of year
     day_index = datetime.now().timetuple().tm_yday % len(DAILY_MOTIVATIONS)
     daily_quote = DAILY_MOTIVATIONS[day_index]
     
     return {
-        'current_user': current_user,
+        'current_user': getattr(g, 'current_user', None),
+        'csrf_token': session.get('csrf_token', ''),
         'daily_quote': daily_quote,
         'current_year': datetime.now().year,
         'today_formatted': datetime.now().strftime('%A, %B %d, %Y')
@@ -51,13 +129,13 @@ def inject_globals():
 
 @app.route('/')
 def index():
-    if 'user_id' in session:
+    if getattr(g, 'current_user', None):
         return redirect(url_for('dashboard'))
     return render_template('index.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    if 'user_id' in session:
+    if getattr(g, 'current_user', None):
         return redirect(url_for('dashboard'))
 
     if request.method == 'POST':
@@ -74,10 +152,20 @@ def login():
             flash('Invalid email or password. Please try again.', 'error')
             return render_template('auth/login.html', email=email)
 
+        # Ensure user has a session_token (backfill if needed)
+        if not user.session_token:
+            user.refresh_session_token()
+            db.session.commit()
+
+        # Regenerate session to prevent session fixation and clear any prior state
+        session.clear()
         session.permanent = remember
         session['user_id'] = user.id
+        session['session_token'] = user.session_token
+        session['user_email'] = user.email
         session['user_name'] = user.name
         session['theme'] = user.theme_preference
+        session['csrf_token'] = secrets.token_hex(32)
 
         flash(f'Welcome back, {user.name}! 🌸', 'success')
         next_url = request.args.get('next')
@@ -87,7 +175,7 @@ def login():
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
-    if 'user_id' in session:
+    if getattr(g, 'current_user', None):
         return redirect(url_for('dashboard'))
 
     if request.method == 'POST':
@@ -119,10 +207,11 @@ def register():
             flash('An account with this email already exists. Please log in.', 'warning')
             return redirect(url_for('login'))
 
-        # Create user
+        # Create user with a unique session_token
         new_user = User(
             name=name,
             email=email,
+            session_token=secrets.token_hex(32),
             avatar='🌸',
             theme_preference='system',
             voice_preference='warm',
@@ -151,10 +240,15 @@ def register():
         db.session.add_all([welcome_msg, first_win])
         db.session.commit()
 
+        # Initialize authenticated session bound to new user
+        session.clear()
         session.permanent = True
         session['user_id'] = new_user.id
+        session['session_token'] = new_user.session_token
+        session['user_email'] = new_user.email
         session['user_name'] = new_user.name
         session['theme'] = new_user.theme_preference
+        session['csrf_token'] = secrets.token_hex(32)
 
         flash(f'Account created successfully! Welcome to your sanctuary, {name}. ✨', 'success')
         return redirect(url_for('dashboard'))
@@ -164,6 +258,7 @@ def register():
 @app.route('/logout')
 def logout():
     session.clear()
+    session['csrf_token'] = secrets.token_hex(32)
     flash('You have been logged out peacefully. See you soon! 🌿', 'info')
     return redirect(url_for('index'))
 
@@ -209,6 +304,7 @@ def reset_password(token):
             return render_template('auth/reset_password.html', step='reset', token=token)
 
         user.set_password(password)
+        user.refresh_session_token()
         db.session.commit()
 
         flash('Your password has been successfully reset! Please log in.', 'success')
@@ -224,8 +320,8 @@ def reset_password(token):
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    user_id = session['user_id']
-    user = db.session.get(User, user_id)
+    user = g.current_user
+    user_id = user.id
 
     # Greeting based on time of day
     current_hour = datetime.now().hour
@@ -293,7 +389,7 @@ def wins_page():
 @app.route('/profile')
 @login_required
 def profile_page():
-    user = db.session.get(User, session['user_id'])
+    user = g.current_user
     voice_profiles = get_voice_profiles()
     return render_template('profile.html', user=user, voice_profiles=voice_profiles)
 
@@ -305,7 +401,7 @@ def profile_page():
 @app.route('/api/moods', methods=['GET', 'POST'])
 @login_required
 def api_moods():
-    user_id = session['user_id']
+    user_id = g.current_user.id
     if request.method == 'GET':
         limit = request.args.get('limit', 20, type=int)
         entries = MoodEntry.query.filter_by(user_id=user_id).order_by(desc(MoodEntry.created_at)).limit(limit).all()
@@ -343,7 +439,7 @@ def api_moods():
 @app.route('/api/moods/<int:entry_id>', methods=['PUT', 'DELETE'])
 @login_required
 def api_mood_item(entry_id):
-    user_id = session['user_id']
+    user_id = g.current_user.id
     entry = db.session.get(MoodEntry, entry_id)
     if not entry or entry.user_id != user_id:
         return jsonify({'error': 'Entry not found or access denied.'}), 404
@@ -371,7 +467,7 @@ def api_mood_item(entry_id):
 @app.route('/api/moods/stats')
 @login_required
 def api_mood_stats():
-    user_id = session['user_id']
+    user_id = g.current_user.id
     
     # Last 7 days trend
     seven_days_ago = datetime.now(timezone.utc) - timedelta(days=7)
@@ -427,7 +523,7 @@ def api_mood_stats():
 @app.route('/api/journals', methods=['GET', 'POST'])
 @login_required
 def api_journals():
-    user_id = session['user_id']
+    user_id = g.current_user.id
     if request.method == 'GET':
         search = request.args.get('search', '').strip()
         query = JournalEntry.query.filter_by(user_id=user_id)
@@ -460,7 +556,7 @@ def api_journals():
 @app.route('/api/journals/<int:entry_id>', methods=['GET', 'PUT', 'DELETE'])
 @login_required
 def api_journal_item(entry_id):
-    user_id = session['user_id']
+    user_id = g.current_user.id
     entry = db.session.get(JournalEntry, entry_id)
     if not entry or entry.user_id != user_id:
         return jsonify({'error': 'Journal entry not found or access denied.'}), 404
@@ -497,7 +593,7 @@ def api_journal_prompts():
 @app.route('/api/wins', methods=['GET', 'POST'])
 @login_required
 def api_wins():
-    user_id = session['user_id']
+    user_id = g.current_user.id
     if request.method == 'GET':
         category = request.args.get('category', '').strip()
         query = TinyWin.query.filter_by(user_id=user_id)
@@ -521,7 +617,7 @@ def api_wins():
 @app.route('/api/wins/<int:win_id>', methods=['DELETE'])
 @login_required
 def api_delete_win(win_id):
-    user_id = session['user_id']
+    user_id = g.current_user.id
     win = db.session.get(TinyWin, win_id)
     if not win or win.user_id != user_id:
         return jsonify({'error': 'Win not found or access denied.'}), 404
@@ -538,7 +634,7 @@ def api_delete_win(win_id):
 @app.route('/api/conversations', methods=['GET', 'POST'])
 @login_required
 def api_conversations():
-    user_id = session['user_id']
+    user_id = g.current_user.id
     if request.method == 'GET':
         convs = Conversation.query.filter_by(user_id=user_id).order_by(desc(Conversation.updated_at)).all()
         return jsonify([c.to_dict() for c in convs])
@@ -564,7 +660,7 @@ def api_conversations():
 @app.route('/api/conversations/<int:conv_id>/messages', methods=['GET'])
 @login_required
 def api_conversation_messages(conv_id):
-    user_id = session['user_id']
+    user_id = g.current_user.id
     conv = db.session.get(Conversation, conv_id)
     if not conv or conv.user_id != user_id:
         return jsonify({'error': 'Conversation not found or access denied.'}), 404
@@ -578,7 +674,7 @@ def api_conversation_messages(conv_id):
 @app.route('/api/conversations/<int:conv_id>', methods=['DELETE'])
 @login_required
 def api_delete_conversation(conv_id):
-    user_id = session['user_id']
+    user_id = g.current_user.id
     conv = db.session.get(Conversation, conv_id)
     if not conv or conv.user_id != user_id:
         return jsonify({'error': 'Conversation not found or access denied.'}), 404
@@ -590,7 +686,7 @@ def api_delete_conversation(conv_id):
 @app.route('/api/chat/message', methods=['POST'])
 @login_required
 def api_send_message():
-    user_id = session['user_id']
+    user_id = g.current_user.id
     data = request.get_json() or {}
     conv_id = data.get('conversation_id')
     user_message = data.get('message', '').strip()
@@ -648,7 +744,7 @@ def api_send_message():
 @app.route('/api/user/profile', methods=['GET', 'PUT'])
 @login_required
 def api_user_profile():
-    user = db.session.get(User, session['user_id'])
+    user = g.current_user
     if request.method == 'GET':
         return jsonify(user.to_dict())
 
@@ -677,7 +773,7 @@ def api_user_profile():
 @app.route('/api/user/change-password', methods=['POST'])
 @login_required
 def api_change_password():
-    user = db.session.get(User, session['user_id'])
+    user = g.current_user
     data = request.get_json() or {}
     current_password = data.get('current_password', '')
     new_password = data.get('new_password', '')
@@ -690,14 +786,18 @@ def api_change_password():
         return jsonify({'error': msg}), 400
 
     user.set_password(new_password)
+    new_token = user.refresh_session_token()
     db.session.commit()
+
+    # Keep current session valid with refreshed token; revokes all other devices/browsers
+    session['session_token'] = new_token
     return jsonify({'success': True, 'message': 'Password updated successfully.'})
 
 @app.route('/api/user/export', methods=['GET'])
 @login_required
 def api_export_user_data():
-    user_id = session['user_id']
-    user = db.session.get(User, user_id)
+    user = g.current_user
+    user_id = user.id
     moods = [m.to_dict() for m in MoodEntry.query.filter_by(user_id=user_id).all()]
     journals = [j.to_dict() for j in JournalEntry.query.filter_by(user_id=user_id).all()]
     wins = [w.to_dict() for w in TinyWin.query.filter_by(user_id=user_id).all()]
@@ -728,7 +828,7 @@ def api_export_user_data():
 @app.route('/api/user/delete-account', methods=['POST'])
 @login_required
 def api_delete_account():
-    user = db.session.get(User, session['user_id'])
+    user = g.current_user
     data = request.get_json() or {}
     password = data.get('password', '')
 
@@ -737,7 +837,10 @@ def api_delete_account():
 
     db.session.delete(user)
     db.session.commit()
+    csrf = session.get('csrf_token')
     session.clear()
+    if csrf:
+        session['csrf_token'] = csrf
     return jsonify({'success': True, 'message': 'Your account and all associated data have been permanently deleted.'})
 
 @app.route('/api/voice/profiles')

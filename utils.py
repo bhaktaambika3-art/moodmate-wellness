@@ -1,10 +1,15 @@
 import re
 from functools import wraps
-from flask import session, redirect, url_for, request, jsonify
+from flask import session, redirect, url_for, request, jsonify, g, current_app, flash
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature
 from config import Config
 
-serializer = URLSafeTimedSerializer(Config.SECRET_KEY)
+def get_serializer():
+    """Retrieve serializer using runtime app SECRET_KEY with fallback to Config."""
+    secret = Config.SECRET_KEY
+    if current_app:
+        secret = current_app.config.get('SECRET_KEY', secret)
+    return URLSafeTimedSerializer(secret)
 
 DAILY_MOTIVATIONS = [
     {"quote": "You don't have to control your thoughts. You just have to stop letting them control you.", "author": "Dan Millman", "tag": "Calm"},
@@ -31,9 +36,16 @@ JOURNAL_PROMPTS = [
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if 'user_id' not in session:
+        # Strict validation: user must be verified and loaded into g.current_user
+        if not getattr(g, 'current_user', None):
+            # Clean up stale session, preserving only CSRF token for future requests
+            csrf = session.get('csrf_token')
+            session.clear()
+            if csrf:
+                session['csrf_token'] = csrf
             if request.is_json or request.path.startswith('/api/'):
-                return jsonify({'error': 'Authentication required', 'login_required': True}), 401
+                return jsonify({'error': 'Authentication required or session expired', 'login_required': True}), 401
+            flash('Your session has expired or is invalid. Please sign in again.', 'warning')
             return redirect(url_for('login', next=request.url))
         return f(*args, **kwargs)
     return decorated_function
@@ -53,12 +65,12 @@ def validate_password(password):
 
 def generate_reset_token(email):
     """Generate a signed, timed password reset token valid for 1 hour."""
-    return serializer.dumps(email, salt='password-reset-salt')
+    return get_serializer().dumps(email, salt='password-reset-salt')
 
 def verify_reset_token(token, max_age_seconds=3600):
     """Verify and decode reset token."""
     try:
-        email = serializer.loads(token, salt='password-reset-salt', max_age=max_age_seconds)
+        email = get_serializer().loads(token, salt='password-reset-salt', max_age=max_age_seconds)
         return email
     except (SignatureExpired, BadSignature):
         return None

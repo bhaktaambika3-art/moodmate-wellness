@@ -1,3 +1,4 @@
+import secrets
 from datetime import datetime, timezone
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -11,6 +12,8 @@ class User(db.Model):
     name = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False, index=True)
     password_hash = db.Column(db.String(255), nullable=False)
+    # Unique session token ensures complete session-user binding and protects against reused integer IDs
+    session_token = db.Column(db.String(64), nullable=False, default=lambda: secrets.token_hex(32), index=True)
     avatar = db.Column(db.String(50), default='🌸')
     theme_preference = db.Column(db.String(20), default='system')  # 'system', 'light', 'dark'
     voice_preference = db.Column(db.String(100), default='warm')  # 'warm', 'calm', 'cheerful', 'gentle'
@@ -29,6 +32,11 @@ class User(db.Model):
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
+
+    def refresh_session_token(self):
+        """Generates a new session token, revoking all other active browser sessions."""
+        self.session_token = secrets.token_hex(32)
+        return self.session_token
 
     def to_dict(self):
         return {
@@ -152,3 +160,28 @@ class ChatMessage(db.Model):
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'formatted_time': self.created_at.strftime('%I:%M %p') if self.created_at else ''
         }
+
+
+def ensure_schema_compatibility(app):
+    """
+    Safely checks the database schema and ensures all required columns exist
+    without deleting, resetting, or losing any existing user records.
+    """
+    with app.app_context():
+        db.create_all()
+        try:
+            from sqlalchemy import inspect, text
+            inspector = inspect(db.engine)
+            if 'users' in inspector.get_table_names():
+                columns = [col['name'] for col in inspector.get_columns('users')]
+                if 'session_token' not in columns:
+                    with db.engine.connect() as conn:
+                        conn.execute(text("ALTER TABLE users ADD COLUMN session_token VARCHAR(64)"))
+                        conn.commit()
+                    # Backfill unique session tokens for any existing rows
+                    users = User.query.filter((User.session_token == None) | (User.session_token == '')).all()
+                    for u in users:
+                        u.session_token = secrets.token_hex(32)
+                    db.session.commit()
+        except Exception as e:
+            print(f"[Schema Check] Notice: {e}")
