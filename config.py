@@ -9,13 +9,15 @@ class Config:
     # Secret key for signing sessions and tokens
     SECRET_KEY = os.environ.get('SECRET_KEY', 'moodmate-secret-dev-key-change-in-production-2026')
     
-    # Database URL handling (converts Render's postgres:// to postgresql:// for SQLAlchemy 2)
+    # Database URL handling (explicitly selects psycopg2 driver for SQLAlchemy 2+)
     database_url = os.environ.get('DATABASE_URL', '').strip()
     if database_url:
         if database_url.startswith('postgres://'):
-            database_url = database_url.replace('postgres://', 'postgresql://', 1)
+            database_url = database_url.replace('postgres://', 'postgresql+psycopg2://', 1)
+        elif database_url.startswith('postgresql://'):
+            database_url = database_url.replace('postgresql://', 'postgresql+psycopg2://', 1)
         # Ensure Neon / cloud PostgreSQL connections enforce SSL
-        if database_url.startswith('postgresql://') and 'sslmode=' not in database_url:
+        if database_url.startswith('postgresql') and 'sslmode=' not in database_url:
             separator = '&' if '?' in database_url else '?'
             database_url = f"{database_url}{separator}sslmode=require"
             

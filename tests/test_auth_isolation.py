@@ -306,5 +306,33 @@ class TestMoodMateAuthIsolation(unittest.TestCase):
 
         app.config['TEST_CSRF_ENFORCED'] = False
 
+    def test_postgresql_url_driver_selection(self):
+        """Test that postgres:// and postgresql:// URLs explicitly select the psycopg2 driver."""
+        from sqlalchemy.engine.url import make_url
+
+        def normalize_url(raw_url):
+            url_str = raw_url.strip()
+            if url_str.startswith('postgres://'):
+                url_str = url_str.replace('postgres://', 'postgresql+psycopg2://', 1)
+            elif url_str.startswith('postgresql://'):
+                url_str = url_str.replace('postgresql://', 'postgresql+psycopg2://', 1)
+            if url_str.startswith('postgresql') and 'sslmode=' not in url_str:
+                sep = '&' if '?' in url_str else '?'
+                url_str = f"{url_str}{sep}sslmode=require"
+            return url_str
+
+        test_cases = [
+            ("postgres://user:pass@ep-xyz.region.aws.neon.tech/neondb", "postgresql+psycopg2"),
+            ("postgresql://user:pass@ep-xyz.region.aws.neon.tech/neondb", "postgresql+psycopg2"),
+            ("postgresql+psycopg2://user:pass@ep-xyz.region.aws.neon.tech/neondb?sslmode=require", "postgresql+psycopg2"),
+        ]
+
+        for raw_url, expected_scheme in test_cases:
+            normalized = normalize_url(raw_url)
+            parsed = make_url(normalized)
+            self.assertEqual(parsed.drivername, expected_scheme)
+            self.assertEqual(parsed.get_dialect()().driver, 'psycopg2')
+            self.assertIn('sslmode=require', normalized)
+
 if __name__ == '__main__':
     unittest.main()

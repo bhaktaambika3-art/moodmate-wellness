@@ -71,10 +71,12 @@ def migrate(sqlite_path="moodmate.db", neon_url=None, dry_run=False):
         print("    Please provide --neon-url or set DATABASE_URL in your .env file.")
         sys.exit(1)
 
-    # Normalize PostgreSQL URL
+    # Normalize PostgreSQL URL to explicitly select psycopg2 driver
     if target_url.startswith("postgres://"):
-        target_url = target_url.replace("postgres://", "postgresql://", 1)
-    if target_url.startswith("postgresql://") and "sslmode=" not in target_url:
+        target_url = target_url.replace("postgres://", "postgresql+psycopg2://", 1)
+    elif target_url.startswith("postgresql://"):
+        target_url = target_url.replace("postgresql://", "postgresql+psycopg2://", 1)
+    if target_url.startswith("postgresql") and "sslmode=" not in target_url:
         sep = "&" if "?" in target_url else "?"
         target_url = f"{target_url}{sep}sslmode=require"
 
