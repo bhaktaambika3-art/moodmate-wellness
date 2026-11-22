@@ -228,79 +228,175 @@ function stopSpeaking() {
 // ==========================================
 // SPEECH RECOGNITION (STT)
 // ==========================================
+
+// Supported languages for microphone input
+const STT_LANGUAGES = {
+    'en-IN': 'English',
+    'hi-IN': 'हिंदी',
+    'bn-IN': 'বাংলা'
+};
+
+// Track text already confirmed before this STT session started
+let sttBaseText = '';
+
+function buildRecognitionInstance(lang) {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) return null;
+    const r = new SpeechRecognition();
+    r.continuous = false;       // single-utterance mode — most reliable across browsers
+    r.interimResults = true;    // show live preview text as user speaks
+    r.lang = lang;
+    return r;
+}
+
 function initSpeechRecognition() {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const micBtn = document.getElementById('micBtn');
-    const sttIndicator = document.getElementById('sttIndicator');
-    const cancelSttBtn = document.getElementById('cancelSttBtn');
-    const chatInput = document.getElementById('chatInputText');
+    const micBtn        = document.getElementById('micBtn');
+    const sttIndicator  = document.getElementById('sttIndicator');
+    const sttLangLabel  = document.getElementById('sttLangLabel');
+    const cancelSttBtn  = document.getElementById('cancelSttBtn');
+    const langSelect    = document.getElementById('sttLangSelect');
+    const chatInput     = document.getElementById('chatInputText');
 
+    // --- Browser not supported ---
     if (!SpeechRecognition) {
         if (micBtn) {
-            micBtn.title = 'Speech recognition not supported in this browser. Please use Chrome/Edge.';
-            micBtn.style.opacity = '0.5';
+            micBtn.title = 'Speech recognition is not available in this browser. Please use Chrome, Edge, or Safari.';
+            micBtn.style.opacity = '0.45';
+            micBtn.setAttribute('aria-disabled', 'true');
         }
+        if (langSelect) langSelect.style.display = 'none';
         return;
     }
 
-    recognition = new SpeechRecognition();
-    recognition.continuous = false;
-    recognition.interimResults = true;
-    recognition.lang = 'en-IN'; // Multi-accent English / Hinglish friendly
+    // Current language (default en-IN)
+    let currentLang = 'en-IN';
 
-    recognition.onstart = () => {
-        isRecognizing = true;
-        if (micBtn) micBtn.classList.add('recording');
-        if (sttIndicator) sttIndicator.style.display = 'flex';
-    };
-
-    recognition.onresult = (event) => {
-        let transcript = '';
-        for (let i = event.resultIndex; i < event.results.length; ++i) {
-            transcript += event.results[i][0].transcript;
+    // Update STT indicator label
+    function updateIndicatorLabel() {
+        if (sttLangLabel) {
+            sttLangLabel.textContent = STT_LANGUAGES[currentLang] || currentLang;
         }
-        if (chatInput) {
-            chatInput.value = transcript;
-            chatInput.style.height = 'auto';
-            chatInput.style.height = (chatInput.scrollHeight) + 'px';
-        }
-    };
+    }
 
-    recognition.onerror = (event) => {
-        console.warn('Speech recognition error:', event.error);
-        stopRecognition();
-        if (event.error === 'not-allowed') {
-            showToast('Microphone access blocked. Please enable mic permissions in your browser bar.', 'error');
-        }
-    };
+    // Language selector change
+    if (langSelect) {
+        langSelect.value = currentLang;
+        langSelect.addEventListener('change', () => {
+            currentLang = langSelect.value;
+            updateIndicatorLabel();
+        });
+    }
 
-    recognition.onend = () => {
-        stopRecognition();
-    };
+    // Build a fresh recognition object (avoids InvalidStateError on reuse)
+    function createRecognition() {
+        const r = buildRecognitionInstance(currentLang);
 
-    const stopRecognition = () => {
+        r.onstart = () => {
+            isRecognizing = true;
+            updateIndicatorLabel();
+            if (micBtn) {
+                micBtn.classList.add('recording');
+                micBtn.setAttribute('aria-label', 'Stop microphone');
+                micBtn.title = 'Tap to stop';
+            }
+            if (sttIndicator) sttIndicator.style.display = 'flex';
+        };
+
+        r.onresult = (event) => {
+            // Build transcript from new results only
+            let interim = '';
+            let finalSegment = '';
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                const result = event.results[i];
+                if (result.isFinal) {
+                    finalSegment += result[0].transcript;
+                } else {
+                    interim += result[0].transcript;
+                }
+            }
+
+            if (chatInput) {
+                // Show base text + final segment + current interim preview
+                chatInput.value = sttBaseText + finalSegment + interim;
+                // Auto-resize textarea
+                chatInput.style.height = 'auto';
+                chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + 'px';
+            }
+
+            // Lock in confirmed final text
+            if (finalSegment) {
+                sttBaseText += finalSegment;
+            }
+        };
+
+        r.onerror = (event) => {
+            console.warn('STT error:', event.error);
+            stopRecognition();
+
+            const messages = {
+                'not-allowed':    'Microphone access was blocked. Please allow mic permission in your browser.',
+                'no-speech':      'No speech detected. Tap the microphone again and speak clearly.',
+                'audio-capture':  'Microphone not found. Check that a microphone is connected.',
+                'network':        'Network error during speech recognition. Check your connection.',
+                'aborted':        null, // user-triggered stop — no toast needed
+            };
+            const msg = messages[event.error];
+            if (msg) showToast(msg, 'error');
+        };
+
+        r.onend = () => {
+            // Always clean up state; don't auto-send
+            stopRecognition();
+        };
+
+        return r;
+    }
+
+    // Reset UI state after recording stops
+    function stopRecognition() {
         isRecognizing = false;
-        if (micBtn) micBtn.classList.remove('recording');
+        recognition = null;
+        if (micBtn) {
+            micBtn.classList.remove('recording');
+            micBtn.setAttribute('aria-label', 'Use Microphone');
+            micBtn.title = 'Tap to speak (Speech-to-text)';
+        }
         if (sttIndicator) sttIndicator.style.display = 'none';
-    };
+    }
 
+    // --- Mic button: tap-to-start / tap-to-stop ---
     if (micBtn) {
         micBtn.addEventListener('click', () => {
-            if (isRecognizing) {
+            if (isRecognizing && recognition) {
+                // User tapped again → stop recording
                 recognition.stop();
+                // stopRecognition() will be called by onend
             } else {
+                // Capture text already in box as the base so we append
+                sttBaseText = chatInput ? chatInput.value : '';
+
+                // Build a fresh recognition object each time
+                recognition = createRecognition();
                 try {
                     recognition.start();
                 } catch (e) {
-                    console.error('Recognition start error:', e);
+                    console.error('Could not start speech recognition:', e);
+                    stopRecognition();
+                    showToast('Could not start microphone. Please try again.', 'error');
                 }
             }
         });
     }
 
+    // --- Cancel button (×) in the STT indicator bar ---
     if (cancelSttBtn) {
         cancelSttBtn.addEventListener('click', () => {
-            if (recognition) recognition.stop();
+            if (isRecognizing && recognition) {
+                recognition.abort(); // discard — no onresult will fire
+            }
+            // Restore base text (discard interim)
+            if (chatInput) chatInput.value = sttBaseText;
             stopRecognition();
         });
     }

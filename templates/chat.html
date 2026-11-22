@@ -143,17 +143,32 @@
                 <!-- Speech recognition active banner -->
                 <div class="stt-active-indicator" id="sttIndicator" style="display: none;">
                     <div class="pulse-ring"></div>
-                    <span><i class="fa-solid fa-microphone"></i> Listening... Speak in English, Hindi, or Bengali</span>
-                    <button type="button" id="cancelSttBtn" class="cancel-stt">&times;</button>
+                    <span>
+                        <i class="fa-solid fa-microphone"></i>
+                        Listening in <strong id="sttLangLabel">English</strong>&hellip;
+                    </span>
+                    <button type="button" id="cancelSttBtn" class="cancel-stt" title="Cancel and discard">&times;</button>
                 </div>
 
                 <div class="input-actions-bar">
+                    <!-- Language selector for microphone -->
+                    <select
+                        id="sttLangSelect"
+                        class="stt-lang-select"
+                        title="Microphone language"
+                        aria-label="Choose speech recognition language"
+                    >
+                        <option value="en-IN">EN</option>
+                        <option value="hi-IN">HI</option>
+                        <option value="bn-IN">BN</option>
+                    </select>
+
                     <!-- Microphone STT button -->
                     <button 
                         type="button" 
                         class="mic-btn" 
                         id="micBtn" 
-                        title="Click to speak (Speech-to-text)" 
+                        title="Tap to speak (Speech-to-text)" 
                         aria-label="Use Microphone"
                     >
                         <i class="fa-solid fa-microphone"></i>

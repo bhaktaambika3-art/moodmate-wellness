@@ -530,10 +530,52 @@
     font-weight: 600;
 }
 
+/* Pulsing dot inside the STT indicator */
+.pulse-ring {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--peach-primary);
+    animation: pulseRing 1.2s ease-in-out infinite;
+    flex-shrink: 0;
+}
+
+@keyframes pulseRing {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%       { opacity: 0.4; transform: scale(1.4); }
+}
+
 .cancel-stt {
     margin-left: auto;
     font-size: 1.1rem;
     color: var(--peach-primary);
+    cursor: pointer;
+}
+
+/* Language selector pill next to mic button */
+.stt-lang-select {
+    appearance: none;
+    -webkit-appearance: none;
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    background: var(--bg-surface);
+    color: var(--text-secondary);
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.2rem 0.5rem;
+    cursor: pointer;
+    height: 28px;
+    min-width: 38px;
+    text-align: center;
+    transition: var(--transition-smooth);
+    flex-shrink: 0;
+}
+
+.stt-lang-select:hover,
+.stt-lang-select:focus {
+    border-color: var(--lavender-primary);
+    color: var(--lavender-primary);
+    outline: none;
 }
 
 .input-actions-bar {
